@@ -1,0 +1,142 @@
+import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { InlineLoading, Search, SkeletonText } from '@carbon/react';
+import styles from '../bed-layout.scss';
+import { MortuaryPatient, MortuaryLocationResponse, EnhancedPatient } from '../../types';
+import { useAwaitingPatients } from '../../home/home.resource';
+import { launchWorkspace, useLayoutType } from '@openmrs/esm-framework';
+import { EmptyState } from '@openmrs/esm-patient-common-lib/src';
+import EmptyMorgueAdmission from '../../empty-state/empty-morgue-admission.component';
+import { getOriginalPatient, transformMortuaryPatient } from '../../helpers/expression-helper';
+import { PatientProvider } from '../../context/deceased-person-context';
+import BedCard from '../../bed/bed.component';
+
+interface BedLayoutProps {
+  awaitingQueueDeceasedPatients: MortuaryPatient[];
+  mortuaryLocation: MortuaryLocationResponse;
+  isLoading: boolean;
+  mutated?: () => void;
+}
+
+const AwaitingBedLayout: React.FC<BedLayoutProps> = ({
+  awaitingQueueDeceasedPatients,
+  mortuaryLocation,
+  isLoading,
+  mutated,
+}) => {
+  const { t } = useTranslation();
+  const [searchTerm, setSearchTerm] = useState('');
+  const trulyAwaitingPatients = useAwaitingPatients(awaitingQueueDeceasedPatients);
+  const isTablet = useLayoutType() === 'tablet';
+  const controlSize = isTablet ? 'md' : 'sm';
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const filteredPatients = useMemo(() => {
+    if (!trulyAwaitingPatients || !searchTerm.trim()) {
+      return trulyAwaitingPatients || [];
+    }
+
+    const lowerSearchTerm = searchTerm.toLowerCase().trim();
+    return trulyAwaitingPatients.filter((mortuaryPatient) => {
+      const patientName = mortuaryPatient?.person?.display?.toLowerCase() || '';
+      const gender = mortuaryPatient?.person?.gender?.toLowerCase() || '';
+      const patientId = mortuaryPatient?.person?.uuid?.toLowerCase() || '';
+      const causeOfDeath = mortuaryPatient?.person?.causeOfDeath?.display?.toLowerCase() || '';
+
+      return (
+        patientName.includes(lowerSearchTerm) ||
+        gender.includes(lowerSearchTerm) ||
+        patientId.includes(lowerSearchTerm) ||
+        causeOfDeath.includes(lowerSearchTerm)
+      );
+    });
+  }, [trulyAwaitingPatients, searchTerm]);
+
+  const handleAdmit = (enhancedPatient: EnhancedPatient) => {
+    const originalPatient = getOriginalPatient(enhancedPatient);
+    if (originalPatient && 'patient' in originalPatient) {
+      launchWorkspace('admit-deceased-person-form', {
+        workspaceTitle: t('admissionForm', 'Admission form'),
+        patientData: originalPatient,
+        mortuaryLocation,
+        mutated,
+      });
+    }
+  };
+
+  const patientContextValue = {
+    mortuaryLocation,
+    isLoading,
+    mutate: mutated,
+    onAdmit: handleAdmit,
+  };
+
+  if (isLoading) {
+    return (
+      <div className={styles.emptyState}>
+        <SkeletonText />
+        <InlineLoading description={t('loadingPatients', 'Loading patients...')} />
+      </div>
+    );
+  }
+
+  if (trulyAwaitingPatients.length) {
+    return (
+      <div>
+        <EmptyMorgueAdmission title={t('noAwaitingPatients', 'No awaiting patients found')} />
+      </div>
+    );
+  }
+
+  const patientsToShow = filteredPatients;
+
+  if (searchTerm.trim() && patientsToShow.length === 0) {
+    return (
+      <>
+        <div className={styles.searchContainer}>
+          <Search
+            labelText={t('searchDeceasedPatients', 'Search deceased patients')}
+            placeholder={t(
+              'searchPatientsPlaceholder',
+              'Search by name, ID number, gender, compartment, or bed type...',
+            )}
+            value={searchTerm}
+            onChange={handleSearchChange}
+            size={controlSize}
+          />
+        </div>
+        <EmptyMorgueAdmission title={t('noMatchingAwaitingPatients', 'No matching awaiting patients found')} />
+      </>
+    );
+  }
+
+  return (
+    <PatientProvider value={patientContextValue}>
+      <div className={styles.searchContainer}>
+        <Search
+          labelText={t('searchDeceasedPatients', 'Search deceased patients')}
+          placeholder={t('searchPatientsPlaceholder', 'Search by name, ID number, gender, compartment, or bed type...')}
+          value={searchTerm}
+          onChange={handleSearchChange}
+          size="sm"
+        />
+      </div>
+      <div className={styles.bedLayoutWrapper}>
+        <div className={styles.bedLayoutContainer}>
+          {patientsToShow.map((mortuaryPatient) => (
+            <BedCard
+              key={mortuaryPatient.person?.uuid}
+              patient={transformMortuaryPatient(mortuaryPatient)}
+              showActions={{ admit: true }}
+            />
+          ))}
+        </div>
+      </div>
+    </PatientProvider>
+  );
+};
+
+export default AwaitingBedLayout;

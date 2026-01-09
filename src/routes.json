@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json.openmrs.org/routes.schema.json",
+  "backendDependencies": {
+    "fhir2": ">=1.2",
+    "webservices.rest": "^2.24.0"
+  },
+  "extensions": [
+    {
+      "name": "action-buttons",
+      "component": "actionBarButtons",
+      "slot": "mortuary-action-buttons-slot",
+      "meta": {
+        "fullWidth": false,
+        "privileges": [
+          "o3 : View Mortuary Dashboard",
+          "o3 : Admit Body to Mortuary",
+          "o3 : Edit Mortuary Records",
+          "o3 : Discharge Body from Mortuary",
+          "o3 : View Mortuary Compartments",
+          "o3 : Swap Mortuary Compartments",
+          "o3 : View Mortuary Billing",
+          "o3 : Process Mortuary Payments",
+          "o3 : View Mortuary Reports",
+          "o3 : Generate Mortuary Reports"
+        ]
+      }
+    },
+    {
+      "name": "deceased-banner-info",
+      "component": "bannerInfo",
+      "slot": "deceased-banner-info-slot",
+      "meta": {
+        "fullWidth": false
+      }
+    },
+    {
+      "name": "print-post-mortem-overflow-menu-item",
+      "component": "printPostMortemOverflowMenuItem",
+      "slot": "print-post-mortem-overflow-menu-item-slot"
+    },
+    {
+      "component": "root",
+      "name": "morgue-dashboard-root",
+      "slot": "morgue-dashboard-slot",
+      "meta": {
+        "privileges": [
+          "o3 : View Mortuary Dashboard"
+        ]
+      }
+    },
+    {
+      "component": "mortuaryDashboardLink",
+      "name": "mortuary-dashboard-link",
+      "slot": "homepage-dashboard-slot",
+      "meta": {
+        "name": "mortuary",
+        "slot": "mortuary-dashboard-slot",
+        "title": "Mortuary"
+      }
+    },
+    {
+      "name": "morgue-dashboard",
+      "component": "morgueDashboard",
+      "slot": "mortuary-dashboard-slot"
+    }
+  ],
+  "workspaces": [
+    {
+      "name": "patient-additional-info-form",
+      "component": "patientAdditionalInfoForm",
+      "title": "add more details",
+      "type": "other-form"
+    },
+    {
+      "name": "discharge-body-form",
+      "component": "dischargeBodyForm",
+      "title": "discharge body form",
+      "type": "other-form"
+    },
+    {
+      "name": "admit-body-form",
+      "component": "admitBodyForm",
+      "title": "Admission form",
+      "type": "other-form"
+    },
+    {
+      "name": "swap-unit-form",
+      "component": "swapForm",
+      "title": "Swap form",
+      "type": "other-form"
+    },{
+      "name": "admit-deceased-person-form",
+      "component": "admitDeceasedPersonForm",
+      "title": "Admit Deceased Person",
+      "type": "other-form"
+    },
+    {
+      "name": "mortuary-form-entry",
+      "component": "mortuaryFormEntry",
+      "title": "Mortuary Form Entry",
+      "type": "form",
+      "width": "extra-wide",
+      "canMaximize": true,
+      "canHide": true
+    }
+  ],
+    "modals": [
+    {
+      "name": "print-confirmation-modal",
+      "component": "printConfirmationModal"
+    },
+    {
+      "name": "autopsy-report-modal",
+      "component": "autopsyReportModal"
+    }
+  ],
+  "pages": [
+    {
+      "component": "root",
+      "route": "morgue"
+    }
+  ]
+}
