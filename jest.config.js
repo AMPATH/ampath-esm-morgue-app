@@ -1,8 +1,32 @@
-const rootConfig = require('../../jest.config.js');
+const path = require('path');
 
 const packageConfig = {
-  ...rootConfig,
-  collectCoverage: false,
+   collectCoverageFrom: [
+    '**/src/**/*.component.tsx',
+    '!**/node_modules/**',
+    '!**/vendor/**',
+    '!**/src/**/*.test.*',
+    '!**/src/declarations.d.ts',
+    '!**/e2e/**',
+  ],
+  transform: {
+    '^.+\\.[jt]sx?$': ['@swc/jest'],
+  },
+  transformIgnorePatterns: ['/node_modules/(?!@openmrs|.+\\.pnp\\.[^\\/]+$)'],
+  moduleNameMapper: {
+    '@openmrs/esm-framework': '@openmrs/esm-framework/mock',
+    '\\.(s?css)$': 'identity-obj-proxy',
+    '^lodash-es/(.*)$': 'lodash/$1',
+    'lodash-es': 'lodash',
+    '^dexie$': require.resolve('dexie'),
+    '^dayjs$': require.resolve('dayjs'),
+  },
+  setupFilesAfterEnv: [path.resolve(__dirname, 'tools', 'setup-tests.ts')],
+  testPathIgnorePatterns: [path.resolve(__dirname, 'e2e')],
+  testEnvironment: 'jsdom',
+  testEnvironmentOptions: {
+    url: 'http://localhost/',
+  }
 };
 
 module.exports = packageConfig;

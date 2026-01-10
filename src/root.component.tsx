@@ -7,8 +7,6 @@ import DeceasedDetailsView from './view-details/main/main.component';
 const Root: React.FC = () => {
   const baseName = window.getOpenmrsSpaBase() + 'home/morgue';
 
-  console.log("----------------->>>>>>>>>")
-
   return (
     <BrowserRouter basename={baseName}>
       <UserHasAccess privilege="o3 : View Mortuary Dashboard">
