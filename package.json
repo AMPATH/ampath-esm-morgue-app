@@ -29,7 +29,8 @@
     "start": "openmrs develop",
     "test": "cross-env TZ=UTC jest --config jest.config.js --verbose false --passWithNoTests",
     "test:watch": "cross-env TZ=UTC jest --watch --config jest.config.js",
-    "typescript": "tsc"
+    "typescript": "tsc",
+    "verify": "turbo lint typescript coverage"
   },
   "browserslist": [
     "extends browserslist-config-openmrs"
@@ -118,5 +119,6 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "packageManager": "yarn@4.10.3"
 }
