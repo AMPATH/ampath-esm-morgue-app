@@ -997,7 +997,7 @@
   dependencies:
     "@ibm/telemetry-js" "^1.5.0"
 
-"@carbon/pictograms-react@*", "@carbon/pictograms-react@^11.66.0":
+"@carbon/pictograms-react@^11.66.0":
   version "11.91.0"
   resolved "https://registry.yarnpkg.com/@carbon/pictograms-react/-/pictograms-react-11.91.0.tgz#7385f7782d24b284c949af900d68d23bc2d132c7"
   integrity sha512-gefJgFzKprbv3mjKxsv1d/Sk1w+GHkIbV4goIX1CG05Z2d9o7vKFo7adr1jNKn0xZkJWmXv5HFgHfEVf+Q4JRA==
@@ -4268,13 +4268,6 @@
     "@types/keyv" "^3.1.4"
     "@types/node" "*"
     "@types/responselike" "^1.0.0"
-
-"@types/carbon__pictograms-react@^11":
-  version "11.89.0"
-  resolved "https://registry.yarnpkg.com/@types/carbon__pictograms-react/-/carbon__pictograms-react-11.89.0.tgz#93bf5213dd089796c1af83fe13d30d5a6f49b7f8"
-  integrity sha512-+VVRardxID6cPdX0hEJnAGl8+JhfYOdtsliDPUzJqQT4jxTRNImHEbcphOzjZVCRQnAcSBxD+UHHcf6NbQEypA==
-  dependencies:
-    "@carbon/pictograms-react" "*"
 
 "@types/connect-history-api-fallback@^1.5.4":
   version "1.5.4"
@@ -14470,12 +14463,12 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==
 
-typescript@^4.0.3, typescript@^4.2.4:
+typescript@^4.2.4:
   version "4.9.5"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.9.5.tgz#095979f9bcc0d09da324d58d03ce8f8374cbe65a"
   integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
 
-typescript@^5.8.3:
+typescript@^5.0.0, typescript@^5.8.3:
   version "5.9.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.9.3.tgz#5b4f59e15310ab17a216f5d6cf53ee476ede670f"
   integrity sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==
