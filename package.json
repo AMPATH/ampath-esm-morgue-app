@@ -36,6 +36,7 @@
     "extends browserslist-config-openmrs"
   ],
   "dependencies": {
+    "@carbon/react": "^1.83.0",
     "@hookform/resolvers": "^3.1.1",
     "ace-builds": "^1.36.5",
     "classnames": "^2.3.2",
