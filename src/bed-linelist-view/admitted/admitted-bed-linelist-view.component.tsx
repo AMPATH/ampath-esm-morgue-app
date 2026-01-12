@@ -407,7 +407,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
                                           const hasBedInfo = rowData.bedNumber && rowData.bedId;
                                           const base = `${window.getOpenmrsSpaBase()}home/morgue/patient/${
                                             rowData.patientUuid
-                                          }`;
+                                            }`;
                                           const to = hasBedInfo
                                             ? `${base}/compartment/${rowData.bedNumber}/${rowData.bedId}/mortuary-chart`
                                             : `${base}/mortuary-chart`;

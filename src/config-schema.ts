@@ -12,10 +12,10 @@ export const configSchema = {
     _description: ' UUID for morgue visit',
     _default: '02b67c47-6071-4091-953d-ad21452e830c',
   },
-  morgueDepartmentServiceTypeUuid: { // - concept
+  morgueDepartmentServiceTypeUuid: {
     _type: Type.String,
     _description: ' UUID for morgue department service type',
-    _default: '5b9e6cd1-f836-4144-91e4-401c58dd62af',
+    _default: '6c28b299-2e99-43c2-9156-1dd77f789661',
   },
   insurancepaymentModeUuid: {
     _type: Type.String,
@@ -23,15 +23,15 @@ export const configSchema = {
     _default: 'beac329b-f1dc-4a33-9e7c-d95821a137a6',
   },
 
-  tagNumberUuid: { // - concept
+  tagNumberUuid: {
     _type: Type.String,
     _description: 'UUID for tag number concept',
-    _default: 'f2b35679-7ba9-4619-92cb-6872b0c6bf57',
+    _default: '2ddd09a1-c266-419a-b8d6-3cdb649dac19',
   },
-  morgueAdmissionEncounterTypeUuid: { //
+  morgueAdmissionEncounterTypeUuid: {
     _type: Type.String,
     _description: 'Encounter type for morgue admission',
-    _default: '3d2df845-6f3c-45e7-b91a-d828a1f9c2e8',
+    _default: 'bd9f341f-6ba9-443a-8f6f-4288c0a82e19',
   },
   morgueDischargeEncounterTypeUuid: { //
     _type: Type.String,
@@ -128,117 +128,117 @@ export const configSchema = {
     _description: 'UUID for reason for transfer concept',
     _default: '162720AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   },
-  locationOfDeathQuestionUuid: { // - concept
+  locationOfDeathQuestionUuid: {
     _type: Type.String,
     _description: 'UUID for location of death question concept',
-    _default: '1541AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    _default: 'a8afd100-1350-11df-a1f1-0026b9348838',
   },
-  locationOfDeathTypesList: { // - concepts
+  locationOfDeathTypesList: {
     _type: Type.Array,
     _description: 'List of location of death types',
     _default: [
       {
-        concept: '1589AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: 'ff3243bf-05f6-426d-aa49-969034962e45',
         label: 'InPatient',
       },
       {
-        concept: '160473AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: 'a8a09ac8-1350-11df-a1f1-0026b9348838',
         label: 'Outpatient',
       },
       {
-        concept: '1601AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: '3d6d1ee8-ea5a-4b36-9a24-b05122a0e0c6',
         label: 'Dead on arrival',
       },
       {
-        concept: '1536AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: 'a89df17e-1350-11df-a1f1-0026b9348838',
         label: 'Home',
       },
       {
-        concept: '1067AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: 'a899b50a-1350-11df-a1f1-0026b9348838',
         label: 'Unknown (Police case)',
       },
     ],
   },
-  deathConfirmationTypes: { // - concepts
+  deathConfirmationTypes: {
     _type: Type.Array,
     _description: 'List of death confirmation types',
     _default: [
       {
-        concept: '1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: 'a8af9046-1350-11df-a1f1-0026b9348838',
         label: 'Yes',
       },
       {
-        concept: '1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: '07e9e14e-a718-4a9e-9479-1de79e1f614a',
         label: 'No',
       },
     ],
   },
-  deathConfirmationQuestionUuid: { // - concept
+  deathConfirmationQuestionUuid: {
     _type: Type.String,
     _description: 'UUID for death confirmation question concept',
-    _default: '165793AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    _default: '3412be33-1352-4409-bd23-adca170802a3',
   },
-  deathNotificationUuid: { // - concept
+  deathNotificationUuid: {
     _type: Type.String,
     _description: 'UUID for death notification concept',
-    _default: '162727AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    _default: '2805fed8-5d7e-4fce-b146-c45bd36a664a',
   },
-  attendingClinicianUuid: { // - concept
+  attendingClinicianUuid: {
     _type: Type.String,
     _description: 'UUID for attending clinician concept',
-    _default: '160632AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    _default: '35b08970-c4a2-4e90-a806-1278955ffc9f',
   },
-  doctorRemarksUuid: { // - concept
+  doctorRemarksUuid: {
     _type: Type.String,
     _description: 'UUID for doctor remarks concept',
-    _default: '161011AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    _default: '5e4dc798-2cce-4a1a-97e9-bcf22d64b07c',
   },
-  causeOfDeathUuid: { // - concept
+  causeOfDeathUuid: {
     _type: Type.String,
     _description: 'UUID for cause of death concept',
-    _default: '160218AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    _default: 'e0636302-39ad-449b-8c19-2551447d641d',
   },
-  deadBodyPreservationTypeUuid: { // - concepts
+  deadBodyPreservationTypeUuid: {
     _type: Type.Array,
     _description: 'List of dead body preservation types',
     _default: [
       {
-        concept: 'bb78fcee-99c8-4073-9224-69c668917405',
+        concept: '67453ebc-4977-4328-be33-8a733f047b9b',
         label: 'Body embalment',
       },
       {
-        concept: '167231AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: '73b68cf4-6f80-41df-b6c6-16045a5ab371',
         label: 'Cold storage',
       },
     ],
   },
-  deadBodyPreservationQuestionUuid: { // - concept
+  deadBodyPreservationQuestionUuid: {
     _type: Type.String,
     _description: 'UUID for dead body preservation question concept',
-    _default: 'c67be9a5-f497-4082-af81-11753f65ed4b',
+    _default: '759e05ff-8bb0-4b32-81b7-f77176335fb4',
   },
-  bodyEmbalmmentTypesUuid: { // - concepts
+  bodyEmbalmmentTypesUuid: {
     _type: Type.Array,
     _description: 'List of body embalmment types',
     _default: [
       {
-        concept: '166402AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: '248392d8-f786-44f2-b490-2d8829c0659c',
         label: 'Arterial',
       },
       {
-        concept: '160494AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: '5afc3f60-c48e-4522-a959-20d2892ca288',
         label: 'Cavity',
       },
       {
-        concept: '151870AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        concept: '3eeac352-2f83-4419-87de-73aea7532b9e',
         label: 'Hypodermic',
       },
     ],
   },
-  autopsyPermissionUuid: { // - concept
+  autopsyPermissionUuid: {
     _type: Type.String,
     _description: 'UUID for autopsy permission concept',
-    _default: '1707AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    _default: '9d1f69d7-e467-4d00-a98a-6771009dd244',
   },
 };
 

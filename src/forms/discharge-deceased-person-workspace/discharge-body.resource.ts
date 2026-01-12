@@ -83,7 +83,7 @@ export const useBills = (
   const startingDateISO = startingDate.toISOString();
   const endDateISO = endDate.toISOString();
 
-  let url = `${restBaseUrl}/cashier/bill?v=custom:(uuid,display,voided,voidReason,adjustedBy,cashPoint:(uuid,name),cashier:(uuid,display),dateCreated,lineItems,patient:(uuid,display),status,balance,totalPayments,totalExempted,totalDeposits,closed)&createdOnOrAfter=${startingDateISO}&createdOnOrBefore=${endDateISO}`;
+  let url = `${restBaseUrl}/billing/bill?v=custom:(uuid,display,voided,voidReason,adjustedBy,cashPoint:(uuid,name),cashier:(uuid,display),dateCreated,lineItems,patient:(uuid,display),status,balance,totalPayments,totalExempted,totalDeposits,closed)&createdOnOrAfter=${startingDateISO}&createdOnOrBefore=${endDateISO}`;
 
   if (patientUuid) {
     url += `&patientUuid=${patientUuid}`;
