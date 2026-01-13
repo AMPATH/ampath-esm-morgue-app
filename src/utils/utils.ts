@@ -78,12 +78,16 @@ export function parseDisplayText(displayText: string): { name: string; openmrsId
   const regex = /(.*) \(OpenMRS ID: (.*)\)/;
   const match = displayText.match(regex);
 
-  if (match && match.length === 3) {
+  if (match && match.length >= 3) {
     const name = match[1].trim();
     const openmrsId = match[2].trim();
     return { name, openmrsId };
   } else {
-    return null;
+    const regex1 = /(.*) \(Old AMPATH Medical Record Number: (.*)\)/;
+    const match1 = displayText.match(regex1);
+    const name = match1[1].trim();
+    const openmrsId = match1[2].trim();
+    return { name, openmrsId };
   }
 }
 

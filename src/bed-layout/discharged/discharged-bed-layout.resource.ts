@@ -89,7 +89,7 @@ export const useMortuaryDischargeEncounter = (
 
 export const usePatients = (uuids: string[]) => {
   const customRepresentation =
-    'custom:(uuid,display,identifiers:(uuid,display),person:(uuid,display,gender,birthdate,dead,age,deathDate,causeOfDeath:(uuid,display),attributes:(uuid,display,value,attributeType:(uuid,))))';
+    'custom:(uuid,display,identifiers:(uuid,display),person:(uuid,display,gender,birthdate,dead,age,deathDate,causeOfDeath:(uuid,display),attributes:(uuid,display,value,attributeType:(uuid,display))))';
   const urls = uuids.map((uuid) => `${restBaseUrl}/patient/${uuid}?v=${customRepresentation}`);
 
   const { data, error, isLoading, mutate } = useSWR<FetchResponse<Patient>[]>(urls, (urls) =>

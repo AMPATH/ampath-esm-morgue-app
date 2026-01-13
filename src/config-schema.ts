@@ -2,12 +2,12 @@ import { Type } from '@openmrs/esm-framework';
 import _default from 'react-hook-form/dist/utils/createSubject';
 
 export const configSchema = {
-  mortuaryLocationTagUuid: { //
+  mortuaryLocationTagUuid: {
     _type: Type.String,
     _description: 'UUID for mortuary location tag',
     _default: '2b3bbabb-37cd-4cbe-af09-87779bde91c0',
   },
-  morgueVisitTypeUuid: { //
+  morgueVisitTypeUuid: {
     _type: Type.String,
     _description: ' UUID for morgue visit',
     _default: '02b67c47-6071-4091-953d-ad21452e830c',
@@ -22,7 +22,6 @@ export const configSchema = {
     _description: ' UUID for insurance payment mode',
     _default: 'beac329b-f1dc-4a33-9e7c-d95821a137a6',
   },
-
   tagNumberUuid: {
     _type: Type.String,
     _description: 'UUID for tag number concept',
@@ -33,65 +32,65 @@ export const configSchema = {
     _description: 'Encounter type for morgue admission',
     _default: 'bd9f341f-6ba9-443a-8f6f-4288c0a82e19',
   },
-  morgueDischargeEncounterTypeUuid: { //
+  morgueDischargeEncounterTypeUuid: {
     _type: Type.String,
     _description: 'Encounter type for morgue discharge',
-    _default: '3d618f40b-b5a3-4f17-81c8-2f04e2aad58e',
+    _default: '88d41c2a-6a96-4393-9fa4-e8910d6f3fa1',
   },
-  nextOfKinNameUuid: { //
+  nextOfKinNameUuid: {
     _type: Type.String,
     _description: 'UUID for next of kin name concept',
-    _default: '830bef6d-b01f-449d-9f8d-ac0fede8dbd3',
+    _default: '05503a5d-d834-452c-a6ba-c763d20ef82e',
   },
-  nextOfKinRelationshipUuid: { //
+  nextOfKinRelationshipUuid: {
     _type: Type.String,
     _description: 'UUID for next of kin relationship concept',
-    _default: 'd0aa9fd1-2ac5-45d8-9c5e-4317c622c8f5',
+    _default: '5730994e-c267-426b-87b6-c152b606973d',
   },
   nextOfKinNationalIdUuid: {
     _type: Type.String,
     _description: 'UUID for next of kin national ID concept',
-    _default: '73d34479-2f9e-4de3-a5e6-1f79a17459bb',
+    _default: '8f1b5a86-48b5-423b-b75a-534223158b0c',
   },
-  nextOfKinPhoneUuid: { 
+  nextOfKinPhoneUuid: {
     _type: Type.String,
     _description: 'UUID for next of kin phone concept',
-    _default: '342a1d39-c541-4b29-8818-930916f4c2dc',
+    _default: 'bcb3220f-57b5-467e-ad8a-282df45a3642',
   },
-  visitPaymentMethodAttributeUuid: {
+  visitPaymentMethodAttributeUuid: { //
     _type: Type.String,
     _description: 'UUID for visit payment method attribute',
     _default: 'e6cb0c3b-04b0-4117-9bc6-ce24adbda802',
   },
-  obNumberUuid: { // - concept
+  obNumberUuid: {
     _type: Type.String,
     _description: 'UUID for ob number concept',
-    _default: '0dffecb3-2dc4-4d56-8cd4-56ba38579c69',
+    _default: 'ff7ff0ae-7c5c-491d-9c0f-4cb5f6ef1362',
   },
-  policeNameUuid: { //- concept
+  policeNameUuid: {
     _type: Type.String,
     _description: 'UUID for police name concept',
-    _default: 'd889f05b-0d9b-462f-ae8e-2e9be79fd954',
+    _default: 'c600442d-8eef-4b00-ba3d-350f18090735',
   },
-  burialPermitNumberUuid: { // - concept
+  burialPermitNumberUuid: {
     _type: Type.String,
     _description: 'UUID for burial permit number concept',
-    _default: 'da524812-5600-4677-ba26-eb61eb925eef',
+    _default: '0b206503-3787-45ae-9314-5870e2738a54',
   },
-  policeIDNumber: { // - concept
+  policeIDNumber: {
     _type: Type.String,
     _description: 'UUID for police id number concept',
-    _default: '163084AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    _default: 'c4d22837-46cd-4e83-af79-336528c4ee66',
   },
   encounterProviderRoleUuid: {
     _type: Type.UUID,
     _default: 'a0b03050-c99b-11e0-9572-0800200c9a66',
     _description: "The provider role to use for the registration encounter. Default is 'Unkown'.",
   },
-  dischargeAreaUuid: { // - concept
+  dischargeAreaUuid: {
     _type: Type.String,
     _description: 'UUID for discharge area concept',
-    _default: '89ebccf1-4cca-4195-aeff-3e75fdf976b4',
+    _default: '8a44833a-761d-47c1-a088-05e1f31c9aca',
   },
   adminUuid: {
     _type: Type.String,
@@ -108,25 +107,25 @@ export const configSchema = {
     _description: 'Encounter UUID for autopsy',
     _default: '465a92f2-baf8-42e9-9612-53064be868e8',
   },
-  courtOrderCaseNumberUuid: { // - concept
+  courtOrderCaseNumberUuid: {
     _type: Type.String,
     _description: 'UUID for court order case number concept',
-    _default: '26e0da6c-3e53-4f7d-9a3a-1c2f634450f7',
+    _default: '310c2e14-80f6-4db2-ae8d-9083a2cb04f0',
   },
   serialNumberUuid: { // - concept
     _type: Type.String,
     _description: 'UUID for serial number concept',
     _default: '1646AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   },
-  receivingAreaUuid: { // - concept
+  receivingAreaUuid: {
     _type: Type.String,
     _description: 'UUID for receiving area concept',
-    _default: '159495AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    _default: '2722deae-f4e6-42f4-8259-f7e47d425d61',
   },
-  reasonForTransferUuid: { // - concept
+  reasonForTransferUuid: {
     _type: Type.String,
     _description: 'UUID for reason for transfer concept',
-    _default: '162720AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    _default: '733ac12d-1a4b-4a03-a275-d7db6fa64976',
   },
   locationOfDeathQuestionUuid: {
     _type: Type.String,
