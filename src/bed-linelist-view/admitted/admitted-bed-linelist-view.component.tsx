@@ -106,11 +106,11 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
         },
       });
     }
-    const base = `${window.getOpenmrsSpaBase()}home/morgue/patient/${patientUuid}`;
-    const to = hasBedInfo
-      ? `${base}/compartment/${bedInfo.bedNumber}/${bedInfo.bedId}/mortuary-chart`
-      : `${base}/mortuary-chart`;
-    navigate({ to });
+    // const base = `${window.getOpenmrsSpaBase()}home/morgue/patient/${patientUuid}`;
+    // const to = hasBedInfo
+    //   ? `${base}/compartment/${bedInfo.bedNumber}/${bedInfo.bedId}/mortuary-chart`
+    //   : `${base}/mortuary-chart`;
+    // navigate({ to });
   };
   const handleDischarge = (patientUuid: string, bedId: number) => {
     if (onDischarge) {
@@ -210,23 +210,23 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
       const compartmentShare = getCompartmentShare(patients);
 
       if (patients.length === 0) {
-        rows.push({
-          id: bedUuid || `empty-bed-${bedId}`,
-          bedNumber,
-          compartmentShare,
-          bedType,
-          status: bedStatus,
-          patientName: '-',
-          idNumber: '-',
-          gender: '-',
-          age: '-',
-          dateOfDeath: '-',
-          causeOfDeath: '-',
-          daysAdmitted: '-',
-          isEmpty: true,
-          bedId,
-          searchableText: `${bedNumber} ${bedType}`.toLowerCase(),
-        });
+        // rows.push({
+        //   id: bedUuid || `empty-bed-${bedId}`,
+        //   bedNumber,
+        //   compartmentShare,
+        //   bedType,
+        //   status: bedStatus,
+        //   patientName: '-',
+        //   idNumber: '-',
+        //   gender: '-',
+        //   age: '-',
+        //   dateOfDeath: '-',
+        //   causeOfDeath: '-',
+        //   daysAdmitted: '-',
+        //   isEmpty: true,
+        //   bedId,
+        //   searchableText: `${bedNumber} ${bedType}`.toLowerCase(),
+        // });
       } else {
         for (const patient of patients) {
           const patientUuid = patient.uuid;

@@ -60,7 +60,6 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
     { key: 'name', header: t('name', 'Name') },
     { key: 'gender', header: t('gender', 'Gender') },
     { key: 'age', header: t('age', 'Age') },
-    { key: 'bedNumber', header: t('compartmentNumber', 'Compartment Number') },
     { key: 'daysAdmitted', header: t('durationOnWard', 'Days In Queue') },
     { key: 'action', header: t('action', 'Action') },
   ];
