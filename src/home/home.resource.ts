@@ -5,6 +5,7 @@ import {
   fhirBaseUrl,
   useConfig,
   useFhirPagination,
+  useSession,
 } from '@openmrs/esm-framework';
 import useSWR from 'swr';
 import {
@@ -25,16 +26,18 @@ interface MortuaryApiResponse {
 export const useAwaitingQueuePatients = (admissionLocation?: MortuaryLocationResponse) => {
   const { morgueDischargeEncounterTypeUuid } = useConfig<ConfigObject>();
   const [currPageSize, setCurrPageSize] = useState(100);
+  const session = useSession();
 
+  const sessionLocationUuid = session?.sessionLocation?.uuid;
   const customRepresentation =
     'custom:(uuid,display,identifiers:(identifier,uuid,preferred,location:(uuid,name)),person:(uuid,display,gender,birthdate,dead,age,deathDate,causeOfDeath:(uuid,display),preferredAddress:(uuid,stateProvince,countyDistrict,address4)))';
-  const url = `${restBaseUrl}/morgue/patient?v=${customRepresentation}&dead=true`;
+  const url = `${restBaseUrl}/morgue/patient?v=${customRepresentation}&locationUuid=${sessionLocationUuid}&dead=true`;
   const { isLoading, error, data, mutate } = useSWR<FetchResponse<MortuaryApiResponse>>(url, openmrsFetch);
 
-  const locationUuid = admissionLocation?.ward?.uuid;
+  const admissionLocationUuid = admissionLocation?.ward?.uuid;
   const dischargeUrl =
-    locationUuid && morgueDischargeEncounterTypeUuid
-      ? `${fhirBaseUrl}/Encounter?_summary=data&type=${morgueDischargeEncounterTypeUuid}&location=${locationUuid}`
+    admissionLocationUuid && morgueDischargeEncounterTypeUuid
+      ? `${fhirBaseUrl}/Encounter?_summary=data&type=${morgueDischargeEncounterTypeUuid}&location=${admissionLocationUuid}`
       : null;
 
   const {
