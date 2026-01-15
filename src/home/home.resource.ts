@@ -80,9 +80,14 @@ export const useAwaitingQueuePatients = (admissionLocation?: MortuaryLocationRes
       return [];
     }
 
-    return data.data.results.filter((patient) => {
+    return data.data.results.filter((patient, index, self) => {
       const patientUuid = patient?.person?.uuid;
       if (!patientUuid) {
+        return false;
+      }
+
+      const arrIndex = self.findIndex(v => v.patient?.person?.uuid === patientUuid);
+      if(arrIndex !== index) {
         return false;
       }
 
