@@ -97,10 +97,10 @@ export const configSchema = {
     _description: 'UUID for admin user',
     _default: 'e02c40e5-04e7-11e5-ae3c-a0b3cc4f922f',
   },
-  autopsyFormUuid: { // - Form
+  autopsyFormUuid: {
     _type: Type.String,
     _description: 'UUID for autopsy form',
-    _default: '2b61a73-4971-4fc0-b20b-9a30176317e2',
+    _default: '18be7d6d-995b-32f1-93c7-c39a0915d98c',
   },
   autopsyEncounterFormUuid: {
     _type: Type.String,
