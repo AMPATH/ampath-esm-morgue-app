@@ -216,11 +216,13 @@ export const useMortuaryOperation = (location?: string) => {
       const observationMappings = getDischargeObservationMappings(data);
       const obs = observationMappings.map(({ uuid, value }) => createObservation(uuid, value)).filter(Boolean);
 
+      const locationUuid = location ? location : visit?.location?.uuid;
+
       const encounterPayload = {
         encounterDatetime: encounterDateTime.toISOString(),
         patient: visit?.patient?.uuid,
         encounterType: config.morgueDischargeEncounterTypeUuid,
-        location: visit?.location?.uuid,
+        location: locationUuid,
         encounterProviders: [
           {
             provider: currentProvider?.uuid,
@@ -230,6 +232,8 @@ export const useMortuaryOperation = (location?: string) => {
         visit: visit?.uuid,
         ...(obs.length > 0 && { obs }),
       };
+
+      console.log(encounterPayload);
 
       return openmrsFetch<Encounter>(`${restBaseUrl}/encounter`, {
         method: 'POST',
@@ -308,6 +312,7 @@ export const useMortuaryOperation = (location?: string) => {
       queueEntry: MappedVisitQueueEntry,
       bedId: number,
       data: z.infer<typeof dischargeFormSchema>,
+      directDischarge: boolean
     ) => {
       try {
         const dischargeDateTime =
@@ -319,7 +324,7 @@ export const useMortuaryOperation = (location?: string) => {
               });
 
         const dischargeEncounter = await createDischargeEncounter(visit, data, dischargeDateTime);
-        const compartment = await removeDeceasedFromCompartment(visit?.patient?.uuid, bedId);
+        const compartment = directDischarge ? null : await removeDeceasedFromCompartment(visit?.patient?.uuid, bedId);
 
         return { dischargeEncounter, compartment };
       } catch (error) {

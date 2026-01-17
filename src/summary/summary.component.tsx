@@ -30,16 +30,19 @@ const Summary: React.FC<SummaryProps> = ({ awaitingQueueCount, admittedCount, di
           headerLabel={isLoading ? <RadioButtonSkeleton /> : t('awaitingAdmissionHeader', 'Awaiting Admission')}
           label={isLoading ? <SkeletonText /> : t('totalCount', 'total')}
           value={isLoading ? <InlineLoading /> : awaitingQueueCount.toString()}
+          cardName = "AWAITING"
         />
         <MetricsCard
           headerLabel={isLoading ? <RadioButtonSkeleton /> : t('admittedHeader', 'Admitted')}
           label={isLoading ? <SkeletonText /> : t('totalCount', 'total')}
           value={isLoading ? <InlineLoading /> : admittedCount.toString()}
+          cardName = "ADMITTED"
         />
         <MetricsCard
           headerLabel={isLoading ? <RadioButtonSkeleton /> : t('dischargedHeader', 'Discharged')}
           label={isLoading ? <SkeletonText /> : t('totalCount', 'total')}
           value={isLoading ? <InlineLoading /> : dischargedCount.toString()}
+          cardName = "DISCHARGED"
         />
       </div>
     </>

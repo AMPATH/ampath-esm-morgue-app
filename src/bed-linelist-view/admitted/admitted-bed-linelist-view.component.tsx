@@ -425,7 +425,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
                                       />
                                       <OverflowMenuItem
                                         onClick={() => handleDischarge(rowData.patientUuid, rowData.bedId)}
-                                        itemText={t('dischargeForm', 'Discharge')}
+                                        itemText={t('discharge', 'Discharge')}
                                       />
                                     </OverflowMenu>
                                   )}

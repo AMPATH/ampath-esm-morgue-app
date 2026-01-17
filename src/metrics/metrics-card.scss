@@ -6,6 +6,18 @@
   flex-grow: 1;
 }
 
+.awaitingTile {
+  background-color: colors.$yellow-10;
+}
+
+.admittedTile {
+  background-color: colors.$green-10;
+}
+
+.dischargedTile {
+  background-color: colors.$purple-10;
+} 
+
 .tileContainer {
   border: 1px solid colors.$gray-20;
   height: 7.875rem;

@@ -41,23 +41,25 @@ import { useVisitQueueEntry } from '../../home/home.resource';
 import classNames from 'classnames';
 import { useMortuaryOperation } from '../admit-deceased-person-workspace/admit-deceased-person.resource';
 import { ConfigObject } from '../../config-schema';
-import { PatientInfo } from '../../types';
+import { MortuaryLocationResponse, PatientInfo } from '../../types';
 import { mutate as mutateSWR } from 'swr';
 interface DischargeFormProps {
   closeWorkspace: () => void;
   patientUuid: string;
   bedId: number;
+  mortuaryLocation: MortuaryLocationResponse;
   mutate: () => void;
+  directDischarge?: boolean;
 }
 
-const DischargeForm: React.FC<DischargeFormProps> = ({ closeWorkspace, patientUuid, bedId, mutate }) => {
+const DischargeForm: React.FC<DischargeFormProps> = ({ closeWorkspace, patientUuid, bedId, mortuaryLocation, directDischarge = false, mutate }) => {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const { activeVisit, currentVisitIsRetrospective } = useVisit(patientUuid);
   const { queueEntry } = useVisitQueueEntry(patientUuid, activeVisit?.uuid);
-  const { dischargeBody } = useMortuaryOperation();
+  const { dischargeBody } = useMortuaryOperation(directDischarge ? mortuaryLocation?.ward?.uuid : "");
   const { patient } = usePatient(patientUuid);
 
   const {
@@ -140,7 +142,7 @@ const DischargeForm: React.FC<DischargeFormProps> = ({ closeWorkspace, patientUu
     }
 
     try {
-      await dischargeBody(activeVisit, queueEntry, bedId, data);
+      await dischargeBody(activeVisit, queueEntry, bedId, data, directDischarge);
 
       const attributeUpdates = [
         {

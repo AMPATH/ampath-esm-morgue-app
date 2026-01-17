@@ -32,6 +32,8 @@ interface AwaitingBedLineListViewProps {
   paginated?: boolean;
   initialPageSize?: number;
   pageSizes?: number[];
+  onDischarge?: (patientUuid: string) => void;
+  onDispose?: (patientUuid: string) => void;
   mutated?: () => void;
 }
 
@@ -42,6 +44,8 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
   paginated = true,
   initialPageSize = 10,
   pageSizes = [10, 20, 30, 40, 50],
+  onDischarge,
+  onDispose,
   mutated,
 }) => {
   const { t } = useTranslation();
@@ -164,6 +168,21 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
     setCurrentPage(1);
   };
 
+  const handleDischarge = (patientUuid: string) => {
+    if (onDischarge) {
+      onDischarge(patientUuid);
+    } else {
+      launchWorkspace('discharge-body-form', {
+        workspaceTitle: t('dischargeForm', 'Discharge form'),
+        patientUuid: patientUuid,
+        bedId: 0,
+        mutate: mutated,
+        mortuaryLocation,
+        directDischarge: true
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className={styles.loadingContainer}>
@@ -229,7 +248,10 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
                                       itemText={t('admit', 'Admit')}
                                       disabled={!patientData}
                                     />
-                                    <OverflowMenuItem onClick={() => handleCancel()} itemText={t('cancel', 'Cancel')} />
+                                    <OverflowMenuItem
+                                      onClick={() => handleDischarge(patientData.patient.uuid)}
+                                      itemText={t('discharge', 'Discharge')}
+                                    />
                                   </OverflowMenu>
                                 </div>
                               ) : (
