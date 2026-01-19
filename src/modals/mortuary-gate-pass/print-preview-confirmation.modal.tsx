@@ -4,7 +4,7 @@ import { useReactToPrint } from 'react-to-print';
 import { formatDate, formatDatetime, parseDate, useSession } from '@openmrs/esm-framework';
 import styles from './print-preview-confirmation.scss';
 import { type Patient } from '../../types';
-import { formatDateTime, documentId, getAbsoluteDateTime } from '../../utils/utils';
+import { formatDateTime, documentId, getAbsoluteDateTime, calculateDaysAdmitted } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 
 type PrintPreviewModalProps = {
@@ -41,7 +41,7 @@ const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ onClose, patient,
   const getPatientNumber = () => {
     const openMRSId =
       patient.identifiers
-        ?.find((id) => id.display?.includes('OpenMRS ID'))
+        ?.find((id) => id.display) // ?.find((id) => id.display?.includes('OpenMRS ID'))
         ?.display?.split('=')?.[1]
         ?.trim() || '';
     return openMRSId;
@@ -64,10 +64,10 @@ const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ onClose, patient,
             <div className={styles.printableBody}>
               <div className={styles.gatePassForm}>
                 <div className={styles.topInfoRow}>
-                  <div className={styles.infoItem}>
+                  {/* <div className={styles.infoItem}>
                     <span className={styles.label}>{t('paperNo', 'Paper No' + ':')}</span>
                     <span className={styles.value}>{getPatientNumber()}</span>
-                  </div>
+                  </div> */}
                   <div className={styles.infoItem}>
                     <span className={styles.label}>{t('patientNo', 'Patient No' + ':')}</span>
                     <span className={styles.value}>{getPatientNumber()}</span>
@@ -100,10 +100,14 @@ const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ onClose, patient,
                     <span className={styles.label}>{t('dateOfDischarge', 'Date of Discharge' + ':')}</span>
                     <span className={styles.value}>{formatDateTime(encounterDate)}</span>
                   </div>
+                  <div className={styles.ageField}>
+                    <span className={styles.label}>{t('daysInMorgue', 'Days' + ':')}</span>
+                    <span className={styles.value}>{calculateDaysAdmitted(patient.person?.deathDate, encounterDate)}</span>
+                  </div>
                 </div>
               </div>
 
-              <div className={styles.paymentSection}>
+              {/* <div className={styles.paymentSection}>
                 <div className={styles.sectionTitle}>
                   {t('methodOfPayment', 'Method of payment (tick as appropriate)')}
                 </div>
@@ -135,9 +139,43 @@ const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ onClose, patient,
                     </span>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               <div className={styles.signaturesSection}>
+                <div className={styles.signatureBlock}>
+                  <div className={styles.signatureRow}>
+                    <div className={styles.nameField}>
+                      <span className={styles.label}>{t('inCharge', 'Nurse in Incharge / Morgue Attendant:')}</span>
+                      <span className={styles.nameValue}>{''}</span>
+                    </div>
+                    <div className={styles.signField}>
+                      <span className={styles.label}>{t('sign', 'Sign:')}</span>
+                      <div className={styles.signatureLine}></div>
+                    </div>
+                    <div className={styles.dateField}>
+                      <span className={styles.label}>{t('date', 'Date:')}</span>
+                      <div className={styles.signatureLine}></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.signatureBlock}>
+                  <div className={styles.signatureRow}>
+                    <div className={styles.nameField}>
+                      <span className={styles.label}>{t('recordsOfficer', 'Records Officer:')}</span>
+                      <span className={styles.nameValue}>{''}</span>
+                    </div>
+                    <div className={styles.signField}>
+                      <span className={styles.label}>{t('sign', 'Sign:')}</span>
+                      <div className={styles.signatureLine}></div>
+                    </div>
+                    <div className={styles.dateField}>
+                      <span className={styles.label}>{t('date', 'Date:')}</span>
+                      <div className={styles.signatureLine}></div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className={styles.signatureBlock}>
                   <div className={styles.signatureRow}>
                     <div className={styles.nameField}>
@@ -158,7 +196,7 @@ const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ onClose, patient,
                 <div className={styles.signatureBlock}>
                   <div className={styles.signatureRow}>
                     <div className={styles.nameField}>
-                      <span className={styles.label}>{t('nurseOfficerIncharge', 'Nurse Officer Incharge:')}</span>
+                      <span className={styles.label}>{t('securityOfficer', 'Security Officer:')}</span>
                       <span className={styles.nameValue}>{''}</span>
                     </div>
                     <div className={styles.signField}>
@@ -175,7 +213,7 @@ const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ onClose, patient,
                 <div className={styles.signatureBlock}>
                   <div className={styles.signatureRow}>
                     <div className={styles.nameField}>
-                      <span className={styles.label}>{t('securityGuardName', 'S. Guard Name:')}</span>
+                      <span className={styles.label}>{t('nextOfKin', 'Next of Kin:')}</span>
                       <span className={styles.nameValue}>{''}</span>
                     </div>
                     <div className={styles.signField}>
@@ -188,12 +226,14 @@ const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({ onClose, patient,
                     </div>
                   </div>
                 </div>
+
+                
 
                 <div className={styles.signatureBlock}>
                   <div className={styles.signatureRow}>
                     <div className={styles.nameField}>
                       <span className={styles.label}>{t('printedBy', 'Printed by:')}</span>
-                      <span className={styles.nameValue}>{userDisplay}</span>
+                      <span className={styles.nameValue}>{userDisplay} on {currentDateTime.date} {currentDateTime.time}</span>
                     </div>
                   </div>
                 </div>

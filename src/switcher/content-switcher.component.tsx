@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   DataTableSkeleton,
   ContentSwitcher,
@@ -19,11 +19,14 @@ import styles from './content-switcher.scss';
 import { CardHeader } from '@openmrs/esm-patient-common-lib';
 import AwaitingBedLayout from '../bed-layout/awaiting/awaiting-bed-layout.component';
 import BedLayout from '../bed-layout/admitted/admitted-bed-layout.component';
-import { MortuaryLocationResponse, MortuaryPatient } from '../types';
+import { MortuaryLocationResponse, MortuaryPatient, Patient } from '../types';
 import AwaitingBedLineListView from '../bed-linelist-view/awaiting/awaiting-bed-linelist-view.component';
 import AdmittedBedLineListView from '../bed-linelist-view/admitted/admitted-bed-linelist-view.component';
 import DischargedBedLayout from '../bed-layout/discharged/discharged-bed-layout.component';
 import DischargedBedLineListView from '../bed-linelist-view/discharged/discharged-bed-line-view.component';
+import { closeWorkspace, ExtensionSlot, FetchResponse, launchWorkspace, launchWorkspace2, openmrsFetch, restBaseUrl, usePatient } from '@openmrs/esm-framework';
+import { Add } from '@carbon/react/icons';
+import usePatientSearchVisibility from '../hooks/usePatientSearchVisibility';
 
 enum ViewType {
   LIST = 0,
@@ -81,10 +84,25 @@ const CustomContentSwitcher: React.FC<CustomContentSwitcherProps> = ({
   const [selectedView, setSelectedView] = React.useState<ViewType>(ViewType.LIST);
   const [selectedTab, setSelectedTab] = React.useState<TabType>(TabType.AWAITING_ADMISSION);
 
+  const [patientSearchQuery, setPatientSearchQuery] = useState('');
+
+  const { isPatientSearchOpen, showPatientSearch } = usePatientSearchVisibility();
+
+  const patientSearchWorkspace = 'patient-search-button-slot';
+
+  const hidePatientSearch = () => {
+    closeWorkspace("patient-search-workspace");
+  }
+
+  const handleReturnToSearchList = useCallback(() => {
+    showPatientSearch();
+    closeWorkspace(patientSearchWorkspace);
+  }, [showPatientSearch]);
+
   const tabs: TabConfig[] = [
     { id: 'awaiting-admission', labelKey: 'awaitingAdmission', defaultLabel: 'Awaiting Admission' },
     { id: 'admitted', labelKey: 'admitted', defaultLabel: 'Admitted' },
-    { id: 'discharge', labelKey: 'discharge', defaultLabel: 'Discharge' },
+    { id: 'discharge', labelKey: 'discharged', defaultLabel: 'Discharged' },
   ];
 
   const handleViewChange = React.useCallback(({ index }: { index: number }) => {
@@ -94,6 +112,15 @@ const CustomContentSwitcher: React.FC<CustomContentSwitcherProps> = ({
   const handleTabChange = React.useCallback((state: { selectedIndex: number }) => {
     setSelectedTab(state.selectedIndex as TabType);
   }, []);
+
+  async function fetchPatient(uuid: string) {
+  try {
+    const url = `${restBaseUrl}/patient/${uuid}`;
+
+    return await openmrsFetch<MortuaryPatient>(url);
+  } catch(error) {
+  }
+}
 
   const renderTabContent = React.useCallback(
     (tabIndex: TabType) => {
@@ -202,6 +229,42 @@ const CustomContentSwitcher: React.FC<CustomContentSwitcherProps> = ({
         </ContentSwitcher>
       </CardHeader>
 
+
+      <ExtensionSlot
+        name={patientSearchWorkspace}
+        className={styles.admissionBtn}
+        state={{
+          buttonText: t('directAdmission', 'Direct admission'),
+          buttonProps: {
+            kind: 'secondary',
+            renderIcon: (props) => <Add size={16} {...props} />,
+            size: 'sm',
+          },
+          handleReturnToSearchList,
+          hidePatientSearch,
+          isOpen: isPatientSearchOpen,
+          searchQuery: patientSearchQuery,
+          searchQueryUpdatedAction: (searchQuery) => setPatientSearchQuery(searchQuery),
+          selectPatientAction: async (selectedPatientUuid) => {
+            const data = await fetchPatient(selectedPatientUuid);
+            const patientData = data.data;
+
+            patientData.patient = patientData.person as Patient;
+          
+            launchWorkspace("admit-deceased-person-form", {
+              workspaceTitle: t('admissionForm', 'Admission form'),
+              patientData: patientData,
+              selectedPatientUuid,
+              mortuaryLocation: admissionLocation,
+              mutated: mutate
+            });
+            hidePatientSearch();
+          },
+          showPatientSearch,
+          workspaceTitle: t('admitPatientToMorgue', 'Admit patient to morgue'),
+        }}
+      />
+
       <div className={styles.tabsContainer}>
         <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
           {isLoading || isLoadingAdmission || isLoadingDischarge ? (
@@ -220,9 +283,8 @@ const CustomContentSwitcher: React.FC<CustomContentSwitcherProps> = ({
                     {t(tab.labelKey, tab.defaultLabel)}
                     {tab.id === 'awaiting-admission' && ` (${awaitingQueueDeceasedPatients?.length || 0})`}
                     {tab.id === 'admitted' &&
-                      ` (${
-                        admissionLocation?.bedLayouts?.reduce((total, bed) => total + (bed.patients?.length || 0), 0) ||
-                        0
+                      ` (${admissionLocation?.bedLayouts?.reduce((total, bed) => total + (bed.patients?.length || 0), 0) ||
+                      0
                       })`}
                     {tab.id === 'discharge' && ` (${dischargedPatients?.length || 0})`}
                   </Tab>

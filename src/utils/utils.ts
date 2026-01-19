@@ -85,12 +85,12 @@ export function parseDisplayText(displayText: string): { name: string; openmrsId
   } else {
     const regex1 = /(.*) \(Old AMPATH Medical Record Number: (.*)\)/;
     const match1 = displayText.match(regex1);
-    if(match1) {
+    if (match1) {
       const name = match1[1].trim();
       const openmrsId = match1[2].trim();
       return { name, openmrsId };
     }
-    return { name: "", openmrsId: ""}
+    return { name: "", openmrsId: "" }
   }
 }
 
@@ -166,4 +166,14 @@ export const getAbsoluteDateTime = () => {
       minute: '2-digit',
     }),
   };
+};
+
+export const calculateDaysAdmitted = (dateOfDeath: string, dateOfDischarge = ""): number => {
+  if (!dateOfDeath) {
+    return 0;
+  }
+  const deathDate = new Date(dateOfDeath);
+  const currentDate = dateOfDischarge ? new Date(dateOfDischarge) : new Date();
+  const timeDiff = currentDate.getTime() - deathDate.getTime();
+  return Math.floor(timeDiff / (1000 * 3600 * 24));
 };

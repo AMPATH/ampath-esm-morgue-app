@@ -41,3 +41,9 @@
 .searchSkeleton {
   padding: layout.$spacing-04;
 }
+
+.admissionBtn {
+  display: flex;
+  flex-direction: row-reverse;
+  // float: right;
+}
