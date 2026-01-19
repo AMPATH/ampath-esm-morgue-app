@@ -1,9 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, Location } from '@carbon/react/icons';
+import { Calendar, Location, Home } from '@carbon/react/icons';
 import { ConfigurableLink, formatDate, PageHeader, PageHeaderContent, useSession } from '@openmrs/esm-framework';
 import styles from './header.scss';
-import { Storage } from '@carbon/pictograms-react';
 
 type HeaderProps = {
   title: string;
@@ -19,7 +18,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
       <PageHeaderContent
         illustration={
           <ConfigurableLink to={`${window.getOpenmrsSpaBase()}home/morgue`}>
-            <Storage className={styles.mortuaryPictogram} />
+            <Home className={styles.mortuaryPictogram} />
           </ConfigurableLink>
         }
         title={title}

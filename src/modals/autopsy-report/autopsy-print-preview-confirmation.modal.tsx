@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ButtonSet, ModalBody, ModalFooter, InlineNotification, Dropdown } from '@carbon/react';
 import { useReactToPrint } from 'react-to-print';
@@ -79,6 +79,21 @@ const AutopsyReportModal: React.FC<AutopsyReportModalProps> = ({ onClose, encoun
     return '';
   };
 
+  const getObservationValueFromUuid = (conceptUuid: string): string => {
+    const obs = selectedEncounter?.obs?.find(
+      (observation) =>
+        observation.concept?.uuid === conceptUuid,
+    );
+
+    if (obs?.value) {
+      if (typeof obs.value === 'object' && obs.value.name) {
+        return obs.value.name.name || String(obs.value);
+      }
+      return String(obs.value);
+    }
+    return '';
+  };
+
   const getProviderName = (): string => {
     return (
       selectedEncounter?.encounterProviders?.[0]?.provider?.person?.display ||
@@ -107,42 +122,43 @@ const AutopsyReportModal: React.FC<AutopsyReportModalProps> = ({ onClose, encoun
 
   const getDataMappings = () => {
     return {
-      referenceNumber: getObservationValue('VERBAL AUTOPSY REFERENCE NUMBER'),
-      policeStation: getObservationValue('Program name') || '',
+      referenceNumber: getObservationValueFromUuid("445e3555-f017-4784-8edf-0556258cc918"), //getObservationValue('VERBAL AUTOPSY REFERENCE NUMBER'),
+      policeStation: getObservationValueFromUuid("079ac46d-b5f7-49aa-ab29-a303a62723a4"), //getObservationValue('Program name') || '',
       patientName: getPatientName(),
       patientAddress: getPatientAddress(),
       age: getPatientAge(),
       gender: getPatientGender(),
-      height: getObservationValue('Height'),
-      locationOfDeath: getObservationValue('Location of death'),
-      witnessedBy: getObservationValue('Witnessed by'),
-      generalExamination: getObservationValue('General examination'),
-      physicalExam: getObservationValue('PHYSICAL EXAM'),
-      nutritionalStatus: getObservationValue('Nutritional plan'),
+      height: getObservationValueFromUuid("a8a6619c-1350-11df-a1f1-0026b9348838"), //getObservationValue('Height'),
+      locationOfDeath: getObservationValueFromUuid("349aa0bf-9f63-4290-a06b-f1822b1e7448"), //getObservationValue('Location of death'),
+      witnessedBy: getObservationValueFromUuid("d4a529fd-09cf-428f-90de-57f25b1fe58a"), //getObservationValue('Witnessed by'),
+      generalExamination: getObservationValueFromUuid("ff10f84d-39ad-40ca-8819-e24a84c45488"), //getObservationValue('General examination'),
+      physicalExam: getObservationValueFromUuid("a8a0cc32-1350-11df-a1f1-0026b9348838"), //getObservationValue('PHYSICAL EXAM'),
+      nutritionalStatus: getObservationValueFromUuid("a8bbaafb-ce87-49bb-a7d5-64e0f5f5a59a"), //getObservationValue('Nutritional plan'),
       externalFindings: getObservationValue('Face examination finding (text)'),
-      headExamination: getObservationValue('Patient-generated history: Head, ears, eyes, nose and throat section text'),
-      respiratorySystem: getObservationValue('Respiratory System status text'),
-      cardiovascularSystem: getObservationValue('Cardiovascular System Inspection'),
-      nervousSystem: getObservationValue('Nervous system examination'),
-      spinalExamination: getObservationValue('Spinal physical examination'),
-      spinalCord: getObservationValue('Result of spinal cord imaging study'),
+      headExamination: getObservationValueFromUuid("083c0ac2-ca9c-4363-9f43-da457e1be519"), //getObservationValue('Patient-generated history: Head, ears, eyes, nose and throat section text'),
+      respiratorySystem: getObservationValueFromUuid("cf05a97a-858e-4a4e-8c4d-dd4b423d258c"),// getObservationValue('Respiratory System status text'),
+      cardiovascularSystem: getObservationValueFromUuid("45be57cf-aa2f-4518-8ff8-20cdc6011256"), //getObservationValue('Cardiovascular System Inspection'),
+      nervousSystem: getObservationValueFromUuid("1a8e718a-c5cc-38d2-99c8-6751aa3b05c6"), //getObservationValue('Nervous system examination'),
+      spinalExamination: getObservationValueFromUuid("e5694295-26b0-4707-8427-6f2a11daa9d4"), //getObservationValue('Spinal physical examination'),
+      spinalCord: getObservationValueFromUuid("7e530da1-61fe-4e6f-a2b3-33cb3c3e3f07"), //getObservationValue('Result of spinal cord imaging study'),
       abdominalExamination: getObservationValue('Abdominal examination'),
-      upperGI: getObservationValue('Upper gastrointestinal examination'),
-      smallIntestine: getObservationValue('Small intestine examination'),
-      liverExamination: getObservationValue('Liver examination'),
-      kidneyExamination: getObservationValue('Result of kidney or ureter exam'),
-      urologicalExamination: getObservationValue('Urological examination'),
-      bloodSample: getObservationValue('Peripheral Blood Film  Examination'),
+      upperGI: getObservationValueFromUuid("90d4640d-5da3-4a5e-913f-8501467250ad"), //getObservationValue('Upper gastrointestinal examination'),
+      smallIntestine: getObservationValueFromUuid("95a61efd-c803-4b05-bc0d-3dd3cbfdcc56"), //getObservationValue('Small intestine examination'),
+      liverExamination: getObservationValueFromUuid("009787d1-b841-4352-b76b-6f52b6a552ed"), //getObservationValue('Liver examination'),
+      kidneyExamination: getObservationValueFromUuid("ce85c387-963e-481d-b265-43462dd2c624"), //getObservationValue('Result of kidney or ureter exam'),
+      urologicalExamination: getObservationValueFromUuid("2ff39563-0428-4a3f-a5c6-8f6719781c7d"), //getObservationValue('Urological examination'),
+      bloodSample: getObservationValueFromUuid("01c75d60-e93b-44e8-93ea-18bcd9417214"), //getObservationValue('Peripheral Blood Film  Examination'),
       causeOfDeath: getObservationValue('Test result free text'),
-      deathCertificate: getObservationValue('Death certificate'),
+      deathCertificate: getObservationValueFromUuid("4334ec8d-ab06-44d5-a311-5a215f3c5ab3"), //getObservationValue('Death certificate'),
       dateTimeRecorded: getObservationValue('Date/time recorded'),
       verificationDateTime: getObservationValue('Datetime of verification'),
       healthWorkerType: getObservationValue('Health worker type'),
-      freeTextGeneral: getObservationValue('Free text general'),
+      freeTextGeneral: getObservationValueFromUuid("a8a06fc6-1350-11df-a1f1-0026b9348838"), //getObservationValue('Free text general'),
       freeTextComment: getObservationValue('Free text comment'),
-      abdominalExaminationText: getObservationValue('Abdominal examination (text)'),
+      abdominalExaminationText: getObservationValueFromUuid("d83019f8-af26-4c23-9b67-8d9e4af7d8c3"), // getObservationValue('Abdominal examination (text)'),
       kidneyExaminationText: getObservationValue('Result of kidney or ureter exam (text)'),
       smallIntestineText: getObservationValue('Small intestine examination (text)'),
+      autopsySpecimen: getObservationValueFromUuid("fa4c4198-b3b2-41fc-b97f-924964c81d87"),
     };
   };
 
@@ -391,7 +407,7 @@ const AutopsyReportModal: React.FC<AutopsyReportModalProps> = ({ onClose, encoun
                   <div className={styles.fieldRow}>
                     <div className={styles.fieldWide}>
                       <span className={styles.label}>{t('analysis', 'Analysis:')}</span>
-                      <div className={styles.largeTextArea}>{data.causeOfDeath}</div>
+                      <div className={styles.largeTextArea}>{data.autopsySpecimen}</div>
                     </div>
                   </div>
                 </div>
