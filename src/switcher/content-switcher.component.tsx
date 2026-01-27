@@ -113,14 +113,26 @@ const CustomContentSwitcher: React.FC<CustomContentSwitcherProps> = ({
     setSelectedTab(state.selectedIndex as TabType);
   }, []);
 
-  async function fetchPatient(uuid: string) {
-  try {
-    const url = `${restBaseUrl}/patient/${uuid}`;
+  const openAdmitWorkspace = (patientData: MortuaryPatient) => {
+    patientData.patient = patientData.person as Patient;
 
-    return await openmrsFetch<MortuaryPatient>(url);
-  } catch(error) {
+    launchWorkspace("admit-deceased-person-form", {
+      workspaceTitle: t('admissionForm', 'Admission form'),
+      patientData: patientData,
+      selectedPatientUuid: patientData.patient.uuid,
+      mortuaryLocation: admissionLocation,
+      mutated: mutate
+    });
   }
-}
+
+  async function fetchPatient(uuid: string) {
+    try {
+      const url = `${restBaseUrl}/patient/${uuid}`;
+
+      return await openmrsFetch<MortuaryPatient>(url);
+    } catch (error) {
+    }
+  }
 
   const renderTabContent = React.useCallback(
     (tabIndex: TabType) => {
@@ -249,15 +261,17 @@ const CustomContentSwitcher: React.FC<CustomContentSwitcherProps> = ({
             const data = await fetchPatient(selectedPatientUuid);
             const patientData = data.data;
 
-            patientData.patient = patientData.person as Patient;
-          
-            launchWorkspace("admit-deceased-person-form", {
-              workspaceTitle: t('admissionForm', 'Admission form'),
-              patientData: patientData,
-              selectedPatientUuid,
-              mortuaryLocation: admissionLocation,
-              mutated: mutate
-            });
+            if (patientData.person.dead) {
+              openAdmitWorkspace(patientData);
+            } else {
+              launchWorkspace("mark-person-deceased-form", {
+                workspaceTitle: t('markDeceased', 'Mark patient deceased'),
+                patientData: patientData,
+                patientUuid: selectedPatientUuid,
+                closeWorkspace: () => { openAdmitWorkspace(patientData) }
+              });
+            }
+
             hidePatientSearch();
           },
           showPatientSearch,

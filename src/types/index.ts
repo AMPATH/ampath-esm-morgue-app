@@ -656,3 +656,24 @@ export interface PatientCardProps {
     viewDetails?: boolean;
   };
 }
+
+export interface CauseOfDeathFetchResponse {
+  uuid: string;
+  value: string;
+}
+
+export interface ConceptAnswer {
+  display: string;
+  name: string;
+  uuid: string;
+}
+
+export interface ConceptAnswersResponse {
+  answers?: Array<ConceptAnswer>;
+}
+export interface CauseOfDeathPayload {
+  causeOfDeath?: string;
+  causeOfDeathNonCoded?: string;
+  dead: boolean;
+  deathDate?: Date;
+}

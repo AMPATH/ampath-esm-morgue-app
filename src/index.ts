@@ -49,6 +49,10 @@ export const admitDeceasedPersonForm = getAsyncLifecycle(
   () => import('./forms/admit-deceased-person-workspace/admit-deceased-person.workspace'),
   options,
 );
+export const markPersonDeceasedForm = getAsyncLifecycle(
+  () => import('./forms/mark-person-deceased-workspace/mark-person-deceased.workspace'),
+  options,
+);
 export const swapForm = getAsyncLifecycle(
   () => import('./forms/swap-compartment-workspace/swap-unit.workspace'),
   options,

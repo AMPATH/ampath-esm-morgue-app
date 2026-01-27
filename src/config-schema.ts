@@ -239,6 +239,10 @@ export const configSchema = {
     _description: 'UUID for autopsy permission concept',
     _default: '9d1f69d7-e467-4d00-a98a-6771009dd244',
   },
+  freeTextFieldConceptUuid: {
+    _type: Type.ConceptUuid,
+    _default: 'a8a06fc6-1350-11df-a1f1-0026b9348838',
+  },
 };
 
 export interface BillingConfig {
@@ -302,4 +306,5 @@ export type ConfigObject = {
   deadBodyPreservationQuestionUuid: string;
   bodyEmbalmmentTypesUuid: Array<{ concept: string; label: string }>;
   autopsyPermissionUuid: string;
+  freeTextFieldConceptUuid: string;
 };

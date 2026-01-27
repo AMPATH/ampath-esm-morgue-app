@@ -195,17 +195,17 @@ export const useMortuaryOperation = (location?: string) => {
     const transferFields =
       data.dischargeType === 'transfer'
         ? [
-            { uuid: config.receivingAreaUuid, value: data.receivingArea },
-            { uuid: config.reasonForTransferUuid, value: data.reasonForTransfer },
-          ]
+          { uuid: config.receivingAreaUuid, value: data.receivingArea },
+          { uuid: config.reasonForTransferUuid, value: data.reasonForTransfer },
+        ]
         : [];
 
     const disposeFields =
       data.dischargeType === 'dispose'
         ? [
-            { uuid: config.serialNumberUuid, value: data.serialNumber },
-            { uuid: config.courtOrderCaseNumberUuid, value: data.courtOrderCaseNumber },
-          ]
+          { uuid: config.serialNumberUuid, value: data.serialNumber },
+          { uuid: config.courtOrderCaseNumberUuid, value: data.courtOrderCaseNumber },
+        ]
         : [];
 
     return [...baseFields, ...transferFields, ...disposeFields];
@@ -319,9 +319,9 @@ export const useMortuaryOperation = (location?: string) => {
           data.dischargeType === 'dispose'
             ? new Date()
             : parseDischargeDateTime({
-                ...data,
-                dateOfDischarge: data.dateOfDischarge ?? new Date(),
-              });
+              ...data,
+              dateOfDischarge: data.dateOfDischarge ?? new Date(),
+            });
 
         const dischargeEncounter = await createDischargeEncounter(visit, data, dischargeDateTime);
         const compartment = directDischarge ? null : await removeDeceasedFromCompartment(visit?.patient?.uuid, bedId);

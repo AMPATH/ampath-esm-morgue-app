@@ -88,10 +88,17 @@
       "component": "swapForm",
       "title": "Swap form",
       "type": "other-form"
-    },{
+    },
+    {
       "name": "admit-deceased-person-form",
       "component": "admitDeceasedPersonForm",
       "title": "Admit Deceased Person",
+      "type": "other-form"
+    },
+    {
+      "name": "mark-person-deceased-form",
+      "component": "markPersonDeceasedForm",
+      "title": "Mark patient as Deceased",
       "type": "other-form"
     },
     {
@@ -104,7 +111,7 @@
       "canHide": true
     }
   ],
-    "modals": [
+  "modals": [
     {
       "name": "print-confirmation-modal",
       "component": "printConfirmationModal"

@@ -144,11 +144,7 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
       mutated,
     });
   };
-
-  const handleCancel = () => {
-    // TODO: Implement cancel functionality
-  };
-
+  
   const goTo = (page: number) => {
     setCurrentPage(page);
   };
