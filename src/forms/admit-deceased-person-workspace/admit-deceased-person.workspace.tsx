@@ -80,7 +80,7 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
   const { cashPoints } = useCashPoint();
   const cashPointUuid = cashPoints?.[0]?.uuid ?? '';
   const patientUuid = patientData?.patient?.uuid || deceasedPatientUuid;
-  const { insuranceSchemes } = useConfig({ externalModuleName: '@openmrs/esm-billing-app' });
+  // const { insuranceSchemes } = useConfig({ externalModuleName: '@openmrs/esm-billing-app' });
   const { paymentModes, isLoading: isLoadingPaymentModes } = usePaymentModes();
   const { currentProvider } = useSession();
 
@@ -328,7 +328,7 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
             </FormGroup>
           </ResponsiveWrapper>
 
-          {paymentMethodObservable === insurancepaymentModeUuid && (
+          {/* {paymentMethodObservable === insurancepaymentModeUuid && (
             <>
               <Column>
                 <Controller
@@ -367,7 +367,7 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
                 />
               </Column>
             </>
-          )}
+          )} */}
 
           {paymentMethodObservable && (
             <Column>
