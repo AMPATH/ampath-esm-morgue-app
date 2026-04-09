@@ -29,7 +29,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ExtensionSlot,
   ResponsiveWrapper,
-  restBaseUrl,
   showSnackbar,
   useConfig,
   useLayoutType,
