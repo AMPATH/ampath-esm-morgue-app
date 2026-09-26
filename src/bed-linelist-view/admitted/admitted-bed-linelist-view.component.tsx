@@ -23,22 +23,23 @@ import { Patient, Person, type MortuaryLocationResponse } from '../../types';
 import { ConfigObject } from '../../config-schema';
 import { mutate as mutateSWR } from 'swr';
 import EmptyMorgueAdmission from '../../empty-state/empty-morgue-admission.component';
+import { StorageAssignment } from '../../morgue-management/types';
 
 interface AdmittedBedLineListViewProps {
-  AdmittedDeceasedPatient: MortuaryLocationResponse | null;
+  admitted: StorageAssignment[];
   isLoading: boolean;
   paginated?: boolean;
   initialPageSize?: number;
   pageSizes?: number[];
   onPostmortem?: (patientUuid: string) => void;
-  onDischarge?: (patientUuid: string, bedId?: number, storageAssignmentUuid?: string) => void;
+  onDischarge?: (patientUuid: string, storageAssignmentUuid?: string) => void;
   onSwapCompartment?: (patientUuid: string, bedId: string) => void;
   onDispose?: (patientUuid: string) => void;
   mutate?: () => void;
 }
 
 const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
-  AdmittedDeceasedPatient,
+  admitted,
   isLoading,
   paginated = true,
   initialPageSize = 10,
@@ -80,9 +81,8 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
     { key: 'patientName', header: t('patientName', 'Patient Name') },
     { key: 'gender', header: t('gender', 'Gender') },
     { key: 'age', header: t('age', 'Age') },
-    { key: 'bedNumber', header: t('compartmentNumber', 'Compartment number') },
-    { key: 'compartmentShare', header: t('compartmentShare', 'Compartment Share') },
-    { key: 'bedType', header: t('bedType', 'Bed Type') },
+    { key: 'compartmentNumber', header: t('compartmentNumber', 'Compartment number') },
+    { key: 'storageUnit', header: t('storageUnit', 'Storage unit') },
     { key: 'daysAdmitted', header: t('daysInMortuary', 'Days in Mortuary') },
     { key: 'status', header: t('status', 'Status') },
     { key: 'action', header: t('action', 'Action') },
@@ -112,21 +112,20 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
     //   : `${base}/mortuary-chart`;
     // navigate({ to });
   };
-  const handleDischarge = (patientUuid: string, bedId: number, storageAssignmentUuid?: string) => {
+  const handleDischarge = (patientUuid: string, storageAssignmentUuid?: string) => {
     if (onDischarge) {
-      onDischarge(patientUuid, bedId, storageAssignmentUuid);
+      onDischarge(patientUuid, storageAssignmentUuid);
     } else {
       launchWorkspace('discharge-body-form', {
         workspaceTitle: t('dischargeForm', 'Discharge form'),
         patientUuid: patientUuid,
-        bedId,
         storageAssignmentUuid,
         mutate,
       });
     }
   };
 
-  const handleSwapCompartment = (patientUuid: string, bedId: number) => {
+  const handleSwapCompartment = (patientUuid: string, bedId: string) => {
     if (onSwapCompartment) {
       onSwapCompartment(patientUuid, bedId.toString());
     } else {
@@ -134,7 +133,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
         workspaceTitle: t('swapCompartment', 'Swap compartment'),
         patientUuid: patientUuid,
         bedId,
-        mortuaryLocation: AdmittedDeceasedPatient,
+        // mortuaryLocation: AdmittedDeceasedPatient,
         mutate,
       });
     }
@@ -161,27 +160,11 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
     };
   }, [t]);
 
-  const getIdNumber = (patient: Patient) => {
-    if (!patient?.identifiers) {
-      return '-';
-    }
-
-    const openmrsIdentifier = patient.identifiers.find(
-      (id) =>
-        (typeof id.identifierType === 'object' &&
-          id.identifierType &&
-          'name' in id.identifierType &&
-          (id.identifierType as { name?: string }).name === 'OpenMRS ID') ||
-        (typeof id.identifierType === 'object' &&
-          id.identifierType &&
-          'display' in id.identifierType &&
-          (id.identifierType as { display?: string }).display === 'OpenMRS ID') ||
-        id.display?.includes('OpenMRS ID'),
-    );
-    return openmrsIdentifier?.identifier || '-';
+  const getIdNumber = (patient: any) => {
+    return "-";
   };
 
-  const getPatientName = (patient: Person) => {
+  const getPatientName = (patient: Patient) => {
     if (!patient) {
       return '-';
     }
@@ -198,74 +181,47 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
       return [];
     }
 
-    const bedLayouts = AdmittedDeceasedPatient?.bedLayouts || [];
+
     const rows = [];
 
-    for (const bedLayout of bedLayouts) {
-      const patients = bedLayout.patients || [];
-      const bedNumber = bedLayout.bedNumber;
-      const bedId = bedLayout.bedId;
-      const bedUuid = bedLayout.bedUuid;
-      const bedStatus = bedLayout.status;
-      const bedType = bedLayout.bedType?.displayName || '-';
-      const compartmentShare = getCompartmentShare(patients);
 
-      if (patients.length === 0) {
-        // rows.push({
-        //   id: bedUuid || `empty-bed-${bedId}`,
-        //   bedNumber,
-        //   compartmentShare,
-        //   bedType,
-        //   status: bedStatus,
-        //   patientName: '-',
-        //   idNumber: '-',
-        //   gender: '-',
-        //   age: '-',
-        //   dateOfDeath: '-',
-        //   causeOfDeath: '-',
-        //   daysAdmitted: '-',
-        //   isEmpty: true,
-        //   bedId,
-        //   searchableText: `${bedNumber} ${bedType}`.toLowerCase(),
-        // });
-      } else {
-        for (const patient of patients) {
-          const patientUuid = patient.uuid;
-          const patientName = getPatientName(patient.person);
-          const gender = patient.person?.gender || '-';
-          const age = patient.person?.age?.toString() || '-';
-          const causeOfDeath = patient.person?.causeOfDeath?.display || t('unknown', 'Unknown');
-          const dateOfDeath = patient.person?.deathDate;
-          const daysAdmitted = calculateDaysAdmitted(dateOfDeath).toString();
-          const idNumber = getIdNumber(patient);
+    if (admitted.length) {
+      for (const adm of admitted) {
+        const compartment = adm?.compartment;
+        const patient = adm?.patient;
+        const patientUuid = patient?.uuid;
+        const patientName = patient?.display;
+        const gender = patient?.person?.gender || '-';
+        const age = patient?.person?.age?.toString() || '-';
+        const causeOfDeath = patient?.person?.causeOfDeath?.display || t('unknown', 'Unknown');
+        const dateOfDeath = patient?.person?.deathDate;
+        const daysAdmitted = calculateDaysAdmitted(dateOfDeath).toString();
+        const idNumber = getIdNumber(patient);
 
-          rows.push({
-            id: `${bedUuid}-${patientUuid}`,
-            bedNumber,
-            compartmentShare,
-            bedType,
-            status: bedStatus,
-            patientName,
-            idNumber,
-            gender,
-            age,
-            dateOfDeath: formatDateTime(dateOfDeath),
-            causeOfDeath,
-            daysAdmitted,
-            isEmpty: false,
-            patientUuid,
-            bedUuid,
-            bedId,
-            storageAssignmentUuid: bedLayout.storageAssignmentUuid,
-            personUuid: patient.person?.uuid || '',
-            searchableText: `${patientName} ${idNumber} ${gender} ${bedNumber} ${bedType}`.toLowerCase(),
-          });
-        }
+        rows.push({
+          id: `${compartment?.uuid}-${patientUuid}`,
+          storageUnit: adm?.compartment?.storageUnit?.display,
+          status: adm?.status,
+          patientName,
+          idNumber,
+          gender,
+          age,
+          dateOfDeath: formatDateTime(dateOfDeath),
+          causeOfDeath,
+          daysAdmitted,
+          isEmpty: false,
+          patientUuid,
+          compartmentUuid: compartment?.uuid,
+          compartmentNumber: compartment?.display,
+          storageAssignmentUuid: adm?.uuid,
+          personUuid: patient.person?.uuid || '',
+          searchableText: `${patientName} ${idNumber} ${gender} ${compartment?.display} ${adm?.compartment?.storageUnit?.display}`.toLowerCase(),
+        });
       }
     }
 
     return rows;
-  }, [getCompartmentShare, AdmittedDeceasedPatient, t, isLoading]);
+  }, [admitted, t, isLoading]);
 
   const filteredRows = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -279,8 +235,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
         row.patientName.toLowerCase().includes(searchLower) ||
         row.idNumber.toLowerCase().includes(searchLower) ||
         row.gender.toLowerCase().includes(searchLower) ||
-        row.bedNumber?.toString().includes(searchLower) ||
-        row.bedType.toLowerCase().includes(searchLower),
+        row.storageUnit?.toString().includes(searchLower)
     );
   }, [allRows, searchTerm]);
 
@@ -301,7 +256,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
     );
   }
 
-  if (!AdmittedDeceasedPatient) {
+  if (!admitted) {
     return (
       <div>
         <EmptyMorgueAdmission title={t('noAdmittedPatient', 'No deceased patients currently admitted')} />
@@ -406,12 +361,11 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
                                     <OverflowMenu flipped>
                                       <OverflowMenuItem
                                         onClick={() => {
-                                          const hasBedInfo = rowData.bedNumber && rowData.bedId;
-                                          const base = `${window.getOpenmrsSpaBase()}home/morgue/patient/${
-                                            rowData.patientUuid
+                                          const hasBedInfo = rowData?.compartmentUuid;
+                                          const base = `${window.getOpenmrsSpaBase()}home/morgue/patient/${rowData.patientUuid
                                             }`;
                                           const to = hasBedInfo
-                                            ? `${base}/compartment/${rowData.bedNumber}/${rowData.bedId}/mortuary-chart`
+                                            ? `${base}/compartment/${rowData.compartmentUuid}/${rowData.compartmentUuid}/mortuary-chart`
                                             : `${base}/mortuary-chart`;
                                           navigate({ to });
                                         }}
@@ -423,13 +377,13 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
                                       />
                                       {!rowData.storageAssignmentUuid && (
                                         <OverflowMenuItem
-                                          onClick={() => handleSwapCompartment(rowData.patientUuid, rowData.bedId)}
+                                          onClick={() => handleSwapCompartment(rowData.patientUuid, rowData?.compartmentUuid)}
                                           itemText={t('compartmentSwap', 'Compartment swap')}
                                         />
                                       )}
                                       <OverflowMenuItem
                                         onClick={() =>
-                                          handleDischarge(rowData.patientUuid, rowData.bedId, rowData.storageAssignmentUuid)
+                                          handleDischarge(rowData.patientUuid, rowData.storageAssignmentUuid)
                                         }
                                         itemText={t('discharge', 'Discharge')}
                                       />

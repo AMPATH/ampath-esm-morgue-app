@@ -1,3 +1,5 @@
+import { Patient } from "@openmrs/esm-framework";
+
 export interface StorageUnit {
     uuid: string;
     display: string;
@@ -13,7 +15,7 @@ export interface Compartment {
 
 export interface StorageAssignment {
     uuid: string;
-    patient: { uuid: string; display: string };
+    patient: Patient;
     compartment: {
         uuid: string;
         display: string;
@@ -21,5 +23,5 @@ export interface StorageAssignment {
     };
     dateAdmitted: string;
     dateDischarged: string | null;
-    status: 'OCCUPIED' | 'DISCHARGED';
+    status: string;
 }

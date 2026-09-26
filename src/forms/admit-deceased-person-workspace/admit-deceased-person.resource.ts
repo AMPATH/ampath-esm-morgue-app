@@ -233,8 +233,6 @@ export const useMortuaryOperation = (location?: string) => {
         ...(obs.length > 0 && { obs }),
       };
 
-      console.log(encounterPayload);
-
       return openmrsFetch<Encounter>(`${restBaseUrl}/encounter`, {
         method: 'POST',
         headers: {

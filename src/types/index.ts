@@ -63,7 +63,7 @@ export interface PersonName {
 
 export interface Patient {
   uuid: string;
-  display: string;
+  display?: string;
   identifiers: Identifier[];
   person: Person;
 }
@@ -409,7 +409,7 @@ export interface VisitQueueEntry {
 
 export interface Patient {
   uuid: string;
-  display: string;
+  display?: string;
   identifiers: Identifier[];
   person: Person;
 }
@@ -633,7 +633,7 @@ export interface EnhancedPatient {
   };
   bedInfo?: {
     bedNumber: string;
-    bedId: number;
+    bedId: string | number;
     bedType?: string;
     storageAssignmentUuid?: string;
   };

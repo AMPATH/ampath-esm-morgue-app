@@ -75,7 +75,7 @@ export const useCompartment = (uuid?: string) => {
 
 export const useStorageAssignments = (locationUuid?: string, status?: StorageAssignment['status']) => {
     const url = locationUuid
-        ? `${storageAssignmentUrl}?location=${encodeURIComponent(locationUuid)}${status ? `&status=${status}` : ''}`
+        ? `${storageAssignmentUrl}?location=${encodeURIComponent(locationUuid)}`
         : null;
     const { data, isLoading, isValidating, error, mutate } = useSWR<{
         data: Array<StorageAssignment> | { results: Array<StorageAssignment> }
@@ -83,7 +83,9 @@ export const useStorageAssignments = (locationUuid?: string, status?: StorageAss
     const response = data?.data;
     const assignments = Array.isArray(response) ? response : response?.results ?? [];
 
-    return { assignments, isLoading, isValidating, error, mutate };
+    const filteredAssignments = status ? assignments?.filter(a => a?.status?.toUpperCase() === status?.toUpperCase()) : assignments;
+
+    return { assignments: filteredAssignments, isLoading, isValidating, error, mutate };
 };
 
 export const saveStorageUnit = (payload: { name: string; location: string }, uuid?: string) =>

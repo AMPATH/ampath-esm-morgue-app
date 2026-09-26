@@ -20,6 +20,73 @@ interface MortuaryApiResponse {
   results: MortuaryPatient[];
 }
 
+export const useMorgueEncounters = () => {
+  const sessionLocation = useSession();
+  const { waitingToBeReceived, isLoading: isLoading1, mutate: mutateWaiting } = useWaitingToBeReceived();
+  const { awaitingAdmission, isLoading: isLoading2, mutate: mutateAwaiting } = useAwaitingAdmission();
+  const {
+    assignments,
+    isLoading: isLoadingAssignments,
+    mutate: mutateAssignments,
+  } = useStorageAssignments(sessionLocation?.sessionLocation?.uuid);
+
+  const mutateAll = React.useCallback(() => {
+    mutateWaiting();
+    mutateAwaiting();
+    mutateAssignments();
+  }, [mutateWaiting, mutateAwaiting, mutateAssignments]);
+
+  const filteredWaitingToBeReceived = waitingToBeReceived?.filter(val => !assignments?.some(ass => ass?.patient?.uuid === val?.patient?.uuid));
+  const filteredAwaitingAdmission = awaitingAdmission?.filter(val => !assignments?.some(ass => ass?.patient?.uuid === val?.patient?.uuid));
+
+  const filteredAdmitted = assignments?.filter(ass => ass?.status?.toUpperCase() === "OCCUPIED" && ass?.dateDischarged == null);
+  const filteredDischarged = assignments?.filter(ass => ass?.status?.toUpperCase() === "DISCHARGED" && ass?.dateDischarged != null);
+
+
+  return {
+    waitingToBeReceived: filteredWaitingToBeReceived,
+    awaitingAdmission: filteredAwaitingAdmission,
+    admitted: filteredAdmitted,
+    discharged: filteredDischarged,
+    isLoading: isLoading1 || isLoading2 || isLoadingAssignments,
+    mutate: mutateAll,
+  }
+}
+
+export const useWaitingToBeReceived = () => {
+  const session = useSession();
+  const sessionLocationUuid = session?.sessionLocation?.uuid;
+  const customRepresentation =
+    'custom:(uuid,display,identifiers:(identifier,uuid,preferred,location:(uuid,name)),person:(uuid,display,gender,birthdate,dead,age,deathDate,causeOfDeath:(uuid,display),preferredAddress:(uuid,stateProvince,countyDistrict,address4)))';
+  const url = `${restBaseUrl}/morgue/patient?v=${customRepresentation}&locationUuid=${sessionLocationUuid}&dead=false`;
+  const { isLoading, error, data, mutate } = useSWR<FetchResponse<MortuaryApiResponse>>(url, openmrsFetch);
+
+  return {
+    waitingToBeReceived: data?.data?.results,
+    isLoading,
+    isError: Boolean(error),
+    error,
+    mutate,
+  }
+}
+
+export const useAwaitingAdmission = () => {
+  const session = useSession();
+  const sessionLocationUuid = session?.sessionLocation?.uuid;
+  const customRepresentation =
+    'custom:(uuid,display,identifiers:(identifier,uuid,preferred,location:(uuid,name)),person:(uuid,display,gender,birthdate,dead,age,deathDate,causeOfDeath:(uuid,display),preferredAddress:(uuid,stateProvince,countyDistrict,address4)))';
+  const url = `${restBaseUrl}/morgue/patient?v=${customRepresentation}&locationUuid=${sessionLocationUuid}&dead=true`;
+  const { isLoading, error, data, mutate } = useSWR<FetchResponse<MortuaryApiResponse>>(url, openmrsFetch);
+
+  return {
+    awaitingAdmission: data?.data?.results,
+    isLoading,
+    isError: Boolean(error),
+    error,
+    mutate,
+  }
+}
+
 export const useAwaitingQueuePatients = (admissionLocation?: MortuaryLocationResponse) => {
   const session = useSession();
 
@@ -64,7 +131,7 @@ export const useAwaitingQueuePatients = (admissionLocation?: MortuaryLocationRes
       }
 
       const arrIndex = self.findIndex(v => v.patient?.person?.uuid === patientUuid);
-      if(arrIndex !== index) {
+      if (arrIndex !== index) {
         return false;
       }
 
@@ -104,8 +171,10 @@ export const useAwaitingQueuePatients = (admissionLocation?: MortuaryLocationRes
   };
 };
 
-export const useStorageAssignmentAdmissionLocation = (location?: MortuaryLocationResponse | null) => {
-  const locationUuid = location?.ward?.uuid;
+export const useStorageAssignmentAdmissionLocation = () => {
+  const session = useSession();
+
+  const locationUuid = session?.sessionLocation?.uuid;
   const {
     assignments,
     isLoading: isLoadingAssignments,
@@ -116,12 +185,12 @@ export const useStorageAssignmentAdmissionLocation = (location?: MortuaryLocatio
   const { patients, isLoading: isLoadingPatients, error: patientsError, mutate: mutatePatients } = usePatients(patientUuids);
 
   const assignmentLocation = useMemo(() => {
-    if (!location) return null;
 
     const patientsByUuid = new Map((patients ?? []).map((patient) => [patient.uuid, patient]));
     const bedLayouts = assignments.flatMap((assignment, index) => {
       const patient = patientsByUuid.get(assignment.patient.uuid);
       if (!patient) return [];
+
       const unit = assignment.compartment.storageUnit;
       return [{
         rowNumber: 0,
@@ -144,8 +213,10 @@ export const useStorageAssignmentAdmissionLocation = (location?: MortuaryLocatio
       }];
     });
 
+    const location = {} as MortuaryLocationResponse
+
     return { ...location, occupiedBeds: bedLayouts.length, bedLayouts };
-  }, [location, locationUuid, assignments, patients]);
+  }, [locationUuid, assignments, patients]);
 
   const mutate = React.useCallback(() => {
     mutateAssignments();

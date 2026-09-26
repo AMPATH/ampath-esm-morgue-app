@@ -82,7 +82,6 @@ const BedCard: React.FC<PatientCardProps> = ({
           isAdmitted={isAdmitted}
           lengthOfStay={lengthOfStay}
           timeSpentTagType={timeSpentTagType}
-          activeVisit={activeVisit}
         />
       </Tile>
     </Layer>

@@ -84,7 +84,7 @@ const Compartments = () => {
             storageUnitUuid,
             onWorkspaceClose: mutate,
         });
-    }, [mutate]);
+    }, [mutate, storageUnitUuid]);
 
     const searchResults: Compartment[] = useMemo(() => {
         const flatCompartments = Array.isArray(compartments) ? compartments.flat() : compartments;

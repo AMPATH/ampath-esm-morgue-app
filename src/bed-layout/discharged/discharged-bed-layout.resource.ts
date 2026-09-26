@@ -2,18 +2,18 @@ import { useMemo, useState } from 'react';
 import { usePaginationInfo } from '@openmrs/esm-patient-common-lib';
 import { type FetchResponse, openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
 import useSWR from 'swr';
+import { mutate as mutateSWR } from 'swr';
 import { type Patient } from '../../types';
 import { type MortuaryLocationResponse } from '../../types';
 import { useStorageAssignments } from '../../morgue-management/morgue-management.resource';
+import { StorageAssignment } from '../../morgue-management/types';
 
 export const useMortuaryDischargeEncounter = (
   _dischargeEncounterTypeUuid: string,
-  admissionLocation: MortuaryLocationResponse | null,
+  assignments: StorageAssignment[],
 ) => {
   const [currPageSize, setCurrPageSize] = useState(100);
   const [currentPage, setCurrentPage] = useState(1);
-  const locationUuid = admissionLocation?.ward?.uuid;
-  const { assignments, isLoading, error, mutate } = useStorageAssignments(locationUuid, 'DISCHARGED');
 
   const currentPageSize = currPageSize;
   const totalCount = assignments.length;
@@ -41,14 +41,17 @@ export const useMortuaryDischargeEncounter = (
 
   const paginated = totalCount > currPageSize;
   const goTo = (page: number) => setCurrentPage(Math.max(1, Math.min(page, Math.ceil(totalCount / currPageSize) || 1)));
-  const mutateAssignments = () => mutate();
+  const mutateAssignments = () =>
+    mutateSWR(
+      (key) => typeof key === 'string' && key.includes('/morgue/storage-assignment'),
+      undefined,
+      { revalidate: true },
+    );
 
   return {
     assignments: pageAssignments,
     encounters,
     dischargedPatientUuids,
-    isLoading,
-    error,
     paginated,
     currentPage,
     pageSizes,
@@ -69,8 +72,8 @@ export const usePatients = (uuids: string[]) => {
   const customRepresentation =
     'custom:(uuid,display,identifiers:(uuid,display),person:(uuid,display,gender,birthdate,dead,age,deathDate,causeOfDeath:(uuid,display),attributes:(uuid,display,value,attributeType:(uuid,display))))';
   const urls = uuids.map((uuid) => `${restBaseUrl}/patient/${uuid}?v=${customRepresentation}`);
-  const { data, error, isLoading, mutate } = useSWR<FetchResponse<Patient>[]>(urls.length > 0 ? urls : null, (requestUrls) =>
-    Promise.all(requestUrls.map((url) => openmrsFetch<Patient>(url))),
+  const { data, error, isLoading, mutate } = useSWR<FetchResponse<Patient>[]>(urls.length > 0 ? urls : null, (requestUrls: string[]) =>
+    Promise.all(requestUrls.map((url: string) => openmrsFetch<Patient>(url))),
   );
 
   return {

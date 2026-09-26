@@ -10,15 +10,16 @@ import BedCard from '../../bed/bed.component';
 import EmptyMorgueAdmission from '../../empty-state/empty-morgue-admission.component';
 import { transformDischargedPatient, extractPatientFromEnhanced } from '../../helpers/expression-helper';
 import { PatientProvider } from '../../context/deceased-person-context';
+import { StorageAssignment } from '../../morgue-management/types';
 interface BedLayoutProps {
-  AdmittedDeceasedPatient: MortuaryLocationResponse | null;
+  discharged: StorageAssignment[];
   isLoading: boolean;
   onPrintGatePass?: (patient: Patient, encounterDate?: string) => void;
   onPrintPostmortem?: (patientUuid: string) => void;
   mutate?: () => void;
 }
 
-const DischargedBedLayout: React.FC<BedLayoutProps> = ({ AdmittedDeceasedPatient, isLoading, onPrintGatePass }) => {
+const DischargedBedLayout: React.FC<BedLayoutProps> = ({ discharged, isLoading, onPrintGatePass }) => {
   const { t } = useTranslation();
   const { morgueDischargeEncounterTypeUuid } = useConfig<ConfigObject>();
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,18 +29,15 @@ const DischargedBedLayout: React.FC<BedLayoutProps> = ({ AdmittedDeceasedPatient
   const {
     dischargedPatientUuids,
     encounters,
-    isLoading: encountersLoading,
-    error: encountersError,
     currentPage,
     totalCount,
     currPageSize,
     setCurrPageSize,
     goTo,
-  } = useMortuaryDischargeEncounter(morgueDischargeEncounterTypeUuid, AdmittedDeceasedPatient);
+  } = useMortuaryDischargeEncounter(morgueDischargeEncounterTypeUuid, discharged);
 
   const {
     patients: dischargedPatients,
-    isLoading: patientsLoading,
     error: patientsError,
   } = usePatients(dischargedPatientUuids || []);
 
@@ -100,12 +98,11 @@ const DischargedBedLayout: React.FC<BedLayoutProps> = ({ AdmittedDeceasedPatient
   };
 
   const patientContextValue = {
-    mortuaryLocation: AdmittedDeceasedPatient,
-    isLoading: isLoading || encountersLoading || patientsLoading,
+    isLoading: isLoading,
     onPrintGatePass: handlePrintGatePass,
   };
 
-  if (isLoading || encountersLoading || patientsLoading) {
+  if (isLoading) {
     return (
       <div className={styles.loadingContainer}>
         <InlineLoading description={t('loadingPatients', 'Loading patients...')} />
@@ -113,7 +110,7 @@ const DischargedBedLayout: React.FC<BedLayoutProps> = ({ AdmittedDeceasedPatient
     );
   }
 
-  if (encountersError || patientsError) {
+  if (!discharged) {
     return (
       <div className={styles.emptyState}>
         <p>{t('errorLoadingPatients', 'Error loading discharged patients')}</p>
