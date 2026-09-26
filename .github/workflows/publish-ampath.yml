@@ -74,7 +74,9 @@ jobs:
         run: yarn build
 
       - name: 📦 Publish to npm with next tag
-        run: yarn npm publish --tag next --access public
+        run: |
+          yarn config set npmPublishRegistry "https://registry.npmjs.org"
+          yarn npm publish --tag next --access public
         env:
           YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
@@ -109,7 +111,8 @@ jobs:
         run: yarn build
 
       - name: 📦 Publish to npm with latest tag
-        run: yarn npm publish --tag latest --access public
+        run: |
+          yarn config set npmPublishRegistry "https://registry.npmjs.org"
+          yarn npm publish --tag latest --access public
         env:
           YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-
