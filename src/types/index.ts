@@ -120,6 +120,7 @@ export interface BedLayout {
   location: string;
   patients: Patient[];
   bedTagMaps: BedTagMap[];
+  storageAssignmentUuid?: string;
 }
 
 export interface AdmissionLocationResponse {
@@ -634,6 +635,7 @@ export interface EnhancedPatient {
     bedNumber: string;
     bedId: number;
     bedType?: string;
+    storageAssignmentUuid?: string;
   };
   visitInfo?: {
     activeVisit?: OpenmrsVisit;

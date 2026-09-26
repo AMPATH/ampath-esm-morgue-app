@@ -58,7 +58,7 @@ const BedCard: React.FC<PatientCardProps> = ({
         onPostmortem?.(patient.uuid);
         break;
       case 'discharge':
-        onDischarge?.(patient.uuid, patient.bedInfo?.bedId);
+        onDischarge?.(patient.uuid, patient.bedInfo?.bedId, patient.bedInfo?.storageAssignmentUuid);
         break;
       case 'swapCompartment':
         onSwapCompartment?.(patient.uuid, patient.bedInfo?.bedId);

@@ -32,6 +32,7 @@ import {
     useConfig,
     useLayoutType,
     usePagination,
+    useSession,
     type LayoutType,
 } from '@openmrs/esm-framework';
 import styles from '../morgue-management.scss';
@@ -51,7 +52,8 @@ interface FilterableTableHeaderProps {
 const Compartments = () => {
     const { t } = useTranslation();
     const [storageUnitUuid, setStorageUnitUuid] = useState("");
-    const { storageUnits } = useStorageUnits();
+    const session = useSession();
+    const { storageUnits } = useStorageUnits(session?.sessionLocation?.uuid);
     const { compartments, isLoading, isValidating, error, mutate } = useCompartments(storageUnitUuid);
     const layout = useLayoutType();
     const { pageSize: configuredPageSize } = useConfig<ConfigObject>();

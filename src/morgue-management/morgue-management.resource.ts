@@ -1,12 +1,15 @@
 import { openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
 import useSWR from 'swr';
-import { type Compartment, type StorageUnit } from './types';
+import { type Compartment, type StorageAssignment, type StorageUnit } from './types';
 
 const storageUnitUrl = `${restBaseUrl}/morgue/storage-unit`;
 const compartmentUrl = `${restBaseUrl}/morgue/compartment`;
+const storageAssignmentUrl = `${restBaseUrl}/morgue/storage-assignment`;
 
-export const useStorageUnits = () => {
-    const url = `${storageUnitUrl}?v=default`;
+export const useStorageUnits = (locationUuid?: string) => {
+    const url = locationUuid
+        ? `${storageUnitUrl}?location=${encodeURIComponent(locationUuid)}&v=default`
+        : null;
     const { data, isLoading, isValidating, error, mutate } = useSWR<{
         data: {
             results: Array<StorageUnit>
@@ -68,6 +71,19 @@ export const useCompartment = (uuid?: string) => {
     const url = uuid ? `${compartmentUrl}/${uuid}?v=default` : null;
     const { data, isLoading, error, mutate } = useSWR<{ data: Compartment }>(url, openmrsFetch);
     return { compartment: data?.data, isLoading, error, mutate };
+};
+
+export const useStorageAssignments = (locationUuid?: string, status?: StorageAssignment['status']) => {
+    const url = locationUuid
+        ? `${storageAssignmentUrl}?location=${encodeURIComponent(locationUuid)}${status ? `&status=${status}` : ''}`
+        : null;
+    const { data, isLoading, isValidating, error, mutate } = useSWR<{
+        data: Array<StorageAssignment> | { results: Array<StorageAssignment> }
+    }>(url, openmrsFetch);
+    const response = data?.data;
+    const assignments = Array.isArray(response) ? response : response?.results ?? [];
+
+    return { assignments, isLoading, isValidating, error, mutate };
 };
 
 export const saveStorageUnit = (payload: { name: string; location: string }, uuid?: string) =>

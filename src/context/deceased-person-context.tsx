@@ -7,7 +7,7 @@ interface PatientContextValue {
   mutate?: () => void;
   onAdmit?: (patient: EnhancedPatient | MortuaryPatient | Patient) => void;
   onPostmortem?: (patientUuid: string, bedInfo?: { bedNumber: string; bedId: number }) => void;
-  onDischarge?: (patientUuid: string, bedId?: number) => void;
+  onDischarge?: (patientUuid: string, bedId?: number, storageAssignmentUuid?: string) => void;
   onSwapCompartment?: (patientUuid: string, bedId?: number) => void;
   onPrintGatePass?: (patient: EnhancedPatient | Patient, encounterDate?: string) => void;
   onViewDetails?: (patientUuid: string, bedInfo?: { bedNumber: string; bedId: number }) => void;

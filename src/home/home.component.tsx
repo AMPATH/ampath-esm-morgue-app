@@ -4,7 +4,11 @@ import Header from '../header/header.component';
 import styles from './home.scss';
 import Summary from '../summary/summary.component';
 import CustomContentSwitcher from '../switcher/content-switcher.component';
-import { useAwaitingPatients, useAwaitingQueuePatients } from './home.resource';
+import {
+  useAwaitingPatients,
+  useAwaitingQueuePatients,
+  useStorageAssignmentAdmissionLocation,
+} from './home.resource';
 import { useLocation, useMortuaryAdmissionLocation } from '../bed-layout/bed-layout.resource';
 import { DataTableSkeleton } from '@carbon/react';
 
@@ -15,11 +19,18 @@ const HomeViewComponent: React.FC = () => {
   const { locations, isLoading: isLoadingLocation, error: locationError } = useLocation();
 
   const {
-    admissionLocation,
+    admissionLocation: legacyAdmissionLocation,
     isLoading: isLoadingAdmission,
     error: admissionError,
     mutate: mutateAdmissionLocation,
   } = useMortuaryAdmissionLocation(selectedLocation);
+
+  const {
+    admissionLocation,
+    isLoading: isLoadingAssignmentAdmission,
+    error: assignmentAdmissionError,
+    mutate: mutateAssignmentAdmission,
+  } = useStorageAssignmentAdmissionLocation(legacyAdmissionLocation);
 
   const {
     awaitingQueueDeceasedPatients,
@@ -32,7 +43,7 @@ const HomeViewComponent: React.FC = () => {
     errorFetchingAwaitingQueuePatients,
     mutateAwaitingQueuePatients,
     mutateAll,
-  } = useAwaitingQueuePatients(admissionLocation);
+  } = useAwaitingQueuePatients(legacyAdmissionLocation);
 
   const locationItems = React.useMemo(() => {
     return locations.map((location) => ({
@@ -46,11 +57,20 @@ const HomeViewComponent: React.FC = () => {
     return (
       isLoadingLocation ||
       isLoadingAdmission ||
+      isLoadingAssignmentAdmission ||
       isLoadingAwaitingQueuePatients ||
       isLoadingDischarge ||
       (!selectedLocation && locationItems?.length === 0)
     );
-  }, [isLoadingLocation, isLoadingAdmission, isLoadingAwaitingQueuePatients, isLoadingDischarge, selectedLocation]);
+  }, [
+    isLoadingLocation,
+    isLoadingAdmission,
+    isLoadingAssignmentAdmission,
+    isLoadingAwaitingQueuePatients,
+    isLoadingDischarge,
+    selectedLocation,
+    locationItems,
+  ]);
 
   const [hasInitialDataLoaded, setHasInitialDataLoaded] = React.useState(false);
 
@@ -62,8 +82,9 @@ const HomeViewComponent: React.FC = () => {
 
   const mutateAllData = React.useCallback(() => {
     mutateAdmissionLocation();
+    mutateAssignmentAdmission();
     mutateAll();
-  }, [mutateAdmissionLocation, mutateAll]);
+  }, [mutateAdmissionLocation, mutateAssignmentAdmission, mutateAll]);
 
   React.useEffect(() => {
     if (locationItems?.length === 1 && !selectedLocation) {
@@ -96,9 +117,9 @@ const HomeViewComponent: React.FC = () => {
         selectedLocation={selectedLocation}
         admissionLocation={admissionLocation}
         isLoadingLocation={isLoadingLocation}
-        isLoadingAdmission={isLoadingAdmission}
+        isLoadingAdmission={isLoadingAdmission || isLoadingAssignmentAdmission}
         locationError={locationError}
-        admissionError={admissionError}
+        admissionError={admissionError || assignmentAdmissionError}
         onLocationChange={handleLocationChange}
         mutate={mutateAllData}
         dischargedPatients={dischargedPatients}

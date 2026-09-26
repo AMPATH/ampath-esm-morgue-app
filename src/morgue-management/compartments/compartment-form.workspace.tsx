@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, ButtonSet, Form, InlineLoading, Select, SelectItem, TextInput } from '@carbon/react';
 import { useTranslation } from 'react-i18next';
-import { showSnackbar, Workspace2 } from '@openmrs/esm-framework';
+import { showSnackbar, useSession, Workspace2 } from '@openmrs/esm-framework';
 import { useForm } from 'react-hook-form';
 import { useStorageUnits } from '../morgue-management.resource';
 import { Compartment } from '../types';
@@ -20,7 +20,8 @@ interface CompartmentFormValues {
 const CompartmentFormWorkspace: React.FC<CompartmentFormProps> = ({ closeWorkspace, workspaceProps }) => {
   const { t } = useTranslation();
   const { compartment, storageUnitUuid, onWorkspaceClose } = workspaceProps ?? {};
-  const { storageUnits, isLoading: isLoadingStorageUnits, error } = useStorageUnits();
+  const session = useSession();
+  const { storageUnits, isLoading: isLoadingStorageUnits, error } = useStorageUnits(session?.sessionLocation?.uuid);
   const initialStorageUnitUuid = compartment?.storageUnit?.uuid ?? storageUnitUuid ?? '';
   const {
     register,

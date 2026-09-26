@@ -23,15 +23,7 @@ export const createDeceasedPatientAdmitSchema = (config?: ConfigObject) => {
     placeOfDeath: z.string().min(1, 'Place of death is required'),
     tagNumber: z.string().min(1, 'Tag number is required'),
     visitType: z.string().uuid('Invalid visit type'),
-    availableCompartment: z
-      .union([z.number(), z.string()])
-      .refine((val) => {
-        if (typeof val === 'string') {
-          return val.length > 0 && !isNaN(Number(val)) && Number(val) > 0;
-        }
-        return typeof val === 'number' && !isNaN(val) && val > 0;
-      }, 'Please select a valid compartment')
-      .transform((val) => (typeof val === 'string' ? Number(val) : val)),
+    availableCompartment: z.string().uuid('Please select a valid compartment'),
     paymentMethod: z.string().uuid('Invalid payment method'),
     services: z.array(z.string().uuid('Invalid service')).min(1, 'Must select at least one service'),
 

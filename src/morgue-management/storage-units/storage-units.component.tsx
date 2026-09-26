@@ -30,6 +30,7 @@ import {
   useConfig,
   useLayoutType,
   usePagination,
+  useSession,
   type LayoutType,
 } from '@openmrs/esm-framework';
 import styles from '../morgue-management.scss';
@@ -48,7 +49,8 @@ interface FilterableTableHeaderProps {
 
 const StorageUnits: React.FC = () => {
   const { t } = useTranslation();
-  const { storageUnits, isLoading, isValidating, error, mutate } = useStorageUnits();
+  const session = useSession();
+  const { storageUnits, isLoading, isValidating, error, mutate } = useStorageUnits(session?.sessionLocation?.uuid);
   const layout = useLayoutType();
   const { pageSize: configuredPageSize } = useConfig<ConfigObject>();
   const [searchString, setSearchString] = useState('');

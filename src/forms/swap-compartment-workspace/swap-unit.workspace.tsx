@@ -57,7 +57,7 @@ const SwapForm: React.FC<SwapFormProps> = ({ closeWorkspace, patientUuid, mortua
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const { currentVisit } = useVisit(patientUuid);
-  const { assignDeceasedToCompartment, removeDeceasedFromCompartment, createEncounterForCompartmentSwap } =
+  const { assignDeceasedToCompartment, dischargeStorageAssignment, createEncounterForCompartmentSwap } =
     useMortuaryOperation();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -131,8 +131,8 @@ const SwapForm: React.FC<SwapFormProps> = ({ closeWorkspace, patientUuid, mortua
               ),
             });
           }
-        } else if (bedAssignedToPatient) {
-          const unassignResponse = await removeDeceasedFromCompartment(patientUuid, bedAssignedToPatient.bedId);
+        } else if (bedAssignedToPatient?.storageAssignmentUuid) {
+          const unassignResponse = await dischargeStorageAssignment(bedAssignedToPatient.storageAssignmentUuid);
 
           if (unassignResponse.ok) {
             showSnackbar({
@@ -143,6 +143,8 @@ const SwapForm: React.FC<SwapFormProps> = ({ closeWorkspace, patientUuid, mortua
               }),
             });
           }
+        } else if (bedAssignedToPatient) {
+          throw new Error(t('missingStorageAssignment', 'Cannot remove this compartment occupancy because it has no storage assignment record.'));
         }
 
         mutate();

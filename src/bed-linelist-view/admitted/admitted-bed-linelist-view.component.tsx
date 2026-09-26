@@ -31,7 +31,7 @@ interface AdmittedBedLineListViewProps {
   initialPageSize?: number;
   pageSizes?: number[];
   onPostmortem?: (patientUuid: string) => void;
-  onDischarge?: (patientUuid: string) => void;
+  onDischarge?: (patientUuid: string, bedId?: number, storageAssignmentUuid?: string) => void;
   onSwapCompartment?: (patientUuid: string, bedId: string) => void;
   onDispose?: (patientUuid: string) => void;
   mutate?: () => void;
@@ -112,14 +112,15 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
     //   : `${base}/mortuary-chart`;
     // navigate({ to });
   };
-  const handleDischarge = (patientUuid: string, bedId: number) => {
+  const handleDischarge = (patientUuid: string, bedId: number, storageAssignmentUuid?: string) => {
     if (onDischarge) {
-      onDischarge(patientUuid);
+      onDischarge(patientUuid, bedId, storageAssignmentUuid);
     } else {
       launchWorkspace('discharge-body-form', {
         workspaceTitle: t('dischargeForm', 'Discharge form'),
         patientUuid: patientUuid,
         bedId,
+        storageAssignmentUuid,
         mutate,
       });
     }
@@ -255,6 +256,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
             patientUuid,
             bedUuid,
             bedId,
+            storageAssignmentUuid: bedLayout.storageAssignmentUuid,
             personUuid: patient.person?.uuid || '',
             searchableText: `${patientName} ${idNumber} ${gender} ${bedNumber} ${bedType}`.toLowerCase(),
           });
@@ -419,12 +421,16 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
                                         onClick={() => handlePostmortem(rowData.patientUuid)}
                                         itemText={t('postmortemForm', 'Postmortem')}
                                       />
+                                      {!rowData.storageAssignmentUuid && (
+                                        <OverflowMenuItem
+                                          onClick={() => handleSwapCompartment(rowData.patientUuid, rowData.bedId)}
+                                          itemText={t('compartmentSwap', 'Compartment swap')}
+                                        />
+                                      )}
                                       <OverflowMenuItem
-                                        onClick={() => handleSwapCompartment(rowData.patientUuid, rowData.bedId)}
-                                        itemText={t('compartmentSwap', 'Compartment swap')}
-                                      />
-                                      <OverflowMenuItem
-                                        onClick={() => handleDischarge(rowData.patientUuid, rowData.bedId)}
+                                        onClick={() =>
+                                          handleDischarge(rowData.patientUuid, rowData.bedId, rowData.storageAssignmentUuid)
+                                        }
                                         itemText={t('discharge', 'Discharge')}
                                       />
                                     </OverflowMenu>

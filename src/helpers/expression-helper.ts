@@ -41,7 +41,7 @@ export const transformMortuaryPatient = (mortuaryPatient: MortuaryPatient): Enha
 
 export const transformAdmittedPatient = (
   patient: Patient,
-  bedInfo: { bedNumber: string; bedId: number; bedType?: string },
+  bedInfo: { bedNumber: string; bedId: number; bedType?: string; storageAssignmentUuid?: string },
 ): EnhancedPatient => ({
   uuid: patient.uuid,
   person: {

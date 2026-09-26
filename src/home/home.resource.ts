@@ -2,9 +2,6 @@ import {
   FetchResponse,
   openmrsFetch,
   restBaseUrl,
-  fhirBaseUrl,
-  useConfig,
-  useFhirPagination,
   useSession,
 } from '@openmrs/esm-framework';
 import useSWR from 'swr';
@@ -14,18 +11,16 @@ import {
   UseVisitQueueEntries,
   VisitQueueEntry,
   MortuaryLocationResponse,
-  Entry,
 } from '../types';
 import React, { useMemo, useEffect, useState } from 'react';
-import { ConfigObject } from '../config-schema';
+import { useStorageAssignments } from '../morgue-management/morgue-management.resource';
+import usePatients from '../bed-layout/discharged/discharged-bed-layout.resource';
 
 interface MortuaryApiResponse {
   results: MortuaryPatient[];
 }
 
 export const useAwaitingQueuePatients = (admissionLocation?: MortuaryLocationResponse) => {
-  const { morgueDischargeEncounterTypeUuid } = useConfig<ConfigObject>();
-  const [currPageSize, setCurrPageSize] = useState(100);
   const session = useSession();
 
   const sessionLocationUuid = session?.sessionLocation?.uuid;
@@ -35,45 +30,27 @@ export const useAwaitingQueuePatients = (admissionLocation?: MortuaryLocationRes
   const { isLoading, error, data, mutate } = useSWR<FetchResponse<MortuaryApiResponse>>(url, openmrsFetch);
 
   const admissionLocationUuid = admissionLocation?.ward?.uuid;
-  const dischargeUrl =
-    admissionLocationUuid && morgueDischargeEncounterTypeUuid
-      ? `${fhirBaseUrl}/Encounter?_summary=data&type=${morgueDischargeEncounterTypeUuid}&location=${admissionLocationUuid}`
-      : null;
-
   const {
-    data: dischargeData,
-    isLoading: dischargeLoading,
-    error: dischargeError,
-    mutate: mutateDischarge,
-  } = useFhirPagination<Entry>(dischargeUrl, currPageSize);
+    assignments: admittedAssignments,
+    isLoading: isLoadingAssignments,
+    error: assignmentsError,
+    mutate: mutateAssignments,
+  } = useStorageAssignments(admissionLocationUuid, 'OCCUPIED');
+  const {
+    assignments: dischargedAssignments,
+    isLoading: isLoadingDischargedAssignments,
+    error: dischargedAssignmentsError,
+    mutate: mutateDischargedAssignments,
+  } = useStorageAssignments(admissionLocationUuid, 'DISCHARGED');
 
-  const dischargedPatientUuids = useMemo(() => {
-    if (!dischargeData || !Array.isArray(dischargeData)) {
-      return [];
-    }
-
-    const uuids = dischargeData
-      .map((entry: Entry) => {
-        const reference = entry?.subject?.reference;
-        if (reference && reference.startsWith('Patient/')) {
-          return reference.split('/')[1];
-        }
-        return undefined;
-      })
-      .filter((uuid: string | undefined) => uuid);
-
-    return [...new Set(uuids)];
-  }, [dischargeData]);
-
-  const admittedPatientUuids = useMemo(() => {
-    if (!admissionLocation?.bedLayouts) {
-      return [];
-    }
-
-    return admissionLocation.bedLayouts
-      .flatMap((bed) => bed.patients?.map((patient) => patient.uuid))
-      .filter(Boolean) as string[];
-  }, [admissionLocation]);
+  const dischargedPatientUuids = useMemo(
+    () => dischargedAssignments.map((assignment) => assignment.patient.uuid),
+    [dischargedAssignments],
+  );
+  const admittedPatientUuids = useMemo(
+    () => admittedAssignments.map((assignment) => assignment.patient.uuid),
+    [admittedAssignments],
+  );
 
   const filteredAwaitingPatients = useMemo(() => {
     if (!data?.data?.results) {
@@ -103,32 +80,15 @@ export const useAwaitingQueuePatients = (admissionLocation?: MortuaryLocationRes
     });
   }, [data, dischargedPatientUuids, admittedPatientUuids]);
 
-  const admittedPatients = useMemo(() => {
-    if (!admissionLocation?.bedLayouts) {
-      return [];
-    }
-
-    return admissionLocation.bedLayouts.flatMap((bed) => bed.patients || []).filter(Boolean);
-  }, [admissionLocation]);
-
-  const { dischargedPatients, dischargedPatientsCount } = useMemo(() => {
-    if (!dischargeData || !Array.isArray(dischargeData) || dischargeLoading) {
-      return { dischargedPatients: [], dischargedPatientsCount: 0 };
-    }
-
-    const discharged = dischargeData.filter((entry) => entry?.subject?.reference);
-    return {
-      dischargedPatients: discharged,
-      dischargedPatientsCount: discharged.length,
-    };
-  }, [dischargeData, dischargeLoading]);
+  const admittedPatients = admittedAssignments;
+  const dischargedPatients = dischargedAssignments;
+  const dischargedPatientsCount = dischargedAssignments.length;
 
   const mutateAll = React.useCallback(() => {
     mutate();
-    if (mutateDischarge) {
-      mutateDischarge();
-    }
-  }, [mutate, mutateDischarge]);
+    mutateAssignments();
+    mutateDischargedAssignments();
+  }, [mutate, mutateAssignments, mutateDischargedAssignments]);
 
   return {
     awaitingQueueDeceasedPatients: filteredAwaitingPatients,
@@ -136,11 +96,67 @@ export const useAwaitingQueuePatients = (admissionLocation?: MortuaryLocationRes
     dischargedPatients,
     dischargedPatientsCount,
     isLoadingAwaitingQueuePatients: isLoading,
-    isLoadingDischarge: dischargeLoading,
-    isLoadingAll: isLoading || dischargeLoading,
-    errorFetchingAwaitingQueuePatients: error || dischargeError,
+    isLoadingDischarge: isLoadingDischargedAssignments,
+    isLoadingAll: isLoading || isLoadingAssignments || isLoadingDischargedAssignments,
+    errorFetchingAwaitingQueuePatients: error || assignmentsError || dischargedAssignmentsError,
     mutateAwaitingQueuePatients: mutateAll,
     mutateAll,
+  };
+};
+
+export const useStorageAssignmentAdmissionLocation = (location?: MortuaryLocationResponse | null) => {
+  const locationUuid = location?.ward?.uuid;
+  const {
+    assignments,
+    isLoading: isLoadingAssignments,
+    error: assignmentsError,
+    mutate: mutateAssignments,
+  } = useStorageAssignments(locationUuid, 'OCCUPIED');
+  const patientUuids = useMemo(() => assignments.map((assignment) => assignment.patient.uuid), [assignments]);
+  const { patients, isLoading: isLoadingPatients, error: patientsError, mutate: mutatePatients } = usePatients(patientUuids);
+
+  const assignmentLocation = useMemo(() => {
+    if (!location) return null;
+
+    const patientsByUuid = new Map((patients ?? []).map((patient) => [patient.uuid, patient]));
+    const bedLayouts = assignments.flatMap((assignment, index) => {
+      const patient = patientsByUuid.get(assignment.patient.uuid);
+      if (!patient) return [];
+      const unit = assignment.compartment.storageUnit;
+      return [{
+        rowNumber: 0,
+        columnNumber: index,
+        bedNumber: assignment.compartment.display,
+        bedId: 0,
+        bedUuid: assignment.compartment.uuid,
+        status: 'OCCUPIED' as const,
+        bedType: {
+          uuid: unit?.uuid ?? '',
+          display: unit?.display ?? '',
+          name: unit?.display ?? '',
+          displayName: unit?.display ?? '',
+          description: '',
+        },
+        location: locationUuid ?? '',
+        patients: [patient],
+        bedTagMaps: [],
+        storageAssignmentUuid: assignment.uuid,
+      }];
+    });
+
+    return { ...location, occupiedBeds: bedLayouts.length, bedLayouts };
+  }, [location, locationUuid, assignments, patients]);
+
+  const mutate = React.useCallback(() => {
+    mutateAssignments();
+    mutatePatients();
+  }, [mutateAssignments, mutatePatients]);
+
+  return {
+    admissionLocation: assignmentLocation,
+    isLoading: isLoadingAssignments || isLoadingPatients,
+    error: assignmentsError || patientsError,
+    mutate,
   };
 };
 

@@ -47,12 +47,21 @@ interface DischargeFormProps {
   closeWorkspace: () => void;
   patientUuid: string;
   bedId: number;
+  storageAssignmentUuid?: string;
   mortuaryLocation: MortuaryLocationResponse;
   mutate: () => void;
   directDischarge?: boolean;
 }
 
-const DischargeForm: React.FC<DischargeFormProps> = ({ closeWorkspace, patientUuid, bedId, mortuaryLocation, directDischarge = false, mutate }) => {
+const DischargeForm: React.FC<DischargeFormProps> = ({
+  closeWorkspace,
+  patientUuid,
+  bedId,
+  storageAssignmentUuid,
+  mortuaryLocation,
+  directDischarge = false,
+  mutate,
+}) => {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -142,7 +151,7 @@ const DischargeForm: React.FC<DischargeFormProps> = ({ closeWorkspace, patientUu
     }
 
     try {
-      await dischargeBody(activeVisit, queueEntry, bedId, data, directDischarge);
+      await dischargeBody(activeVisit, queueEntry, data, directDischarge, storageAssignmentUuid);
 
       const attributeUpdates = [
         {

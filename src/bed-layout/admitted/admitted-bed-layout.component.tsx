@@ -66,7 +66,7 @@ const BedLayout: React.FC<BedLayoutProps> = ({
     navigate({ to });
   };
 
-  const handleDischarge = (patientUuid: string, bedId?: number) => {
+  const handleDischarge = (patientUuid: string, bedId?: number, storageAssignmentUuid?: string) => {
     if (onDischarge) {
       onDischarge(patientUuid);
     } else {
@@ -74,6 +74,7 @@ const BedLayout: React.FC<BedLayoutProps> = ({
         workspaceTitle: t('dischargeForm', 'Discharge form'),
         patientUuid: patientUuid,
         bedId,
+        storageAssignmentUuid,
         mutate,
       });
     }
@@ -218,10 +219,11 @@ const BedLayout: React.FC<BedLayoutProps> = ({
                             bedNumber: bedLayout.bedNumber,
                             bedId: bedLayout.bedId,
                             bedType: bedLayout.bedType?.displayName,
+                            storageAssignmentUuid: bedLayout.storageAssignmentUuid,
                           })}
                           showActions={{
                             discharge: true,
-                            swapCompartment: true,
+                            swapCompartment: !bedLayout.storageAssignmentUuid,
                             postmortem: true,
                             viewDetails: true,
                           }}
@@ -236,10 +238,11 @@ const BedLayout: React.FC<BedLayoutProps> = ({
                       bedNumber: bedLayout.bedNumber,
                       bedId: bedLayout.bedId,
                       bedType: bedLayout.bedType?.displayName,
+                      storageAssignmentUuid: bedLayout.storageAssignmentUuid,
                     })}
                     showActions={{
                       discharge: true,
-                      swapCompartment: true,
+                      swapCompartment: !bedLayout.storageAssignmentUuid,
                       postmortem: true,
                       viewDetails: true,
                     }}
