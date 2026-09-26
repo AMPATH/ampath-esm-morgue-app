@@ -1,7 +1,11 @@
 import { Type } from '@openmrs/esm-framework';
-import _default from 'react-hook-form/dist/utils/createSubject';
 
 export const configSchema = {
+  pageSize: {
+    _type: Type.Number,
+    _description: 'The default page size',
+    _default: 10,
+  },
   mortuaryLocationTagUuid: {
     _type: Type.String,
     _description: 'UUID for mortuary location tag',
@@ -268,6 +272,7 @@ export interface BillingConfig {
 }
 
 export type ConfigObject = {
+  pageSize: number;
   morgueVisitTypeUuid: string;
   morgueDepartmentServiceTypeUuid: string;
   insurancepaymentModeUuid: string;

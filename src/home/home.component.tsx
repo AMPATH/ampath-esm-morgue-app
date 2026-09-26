@@ -34,6 +34,14 @@ const HomeViewComponent: React.FC = () => {
     mutateAll,
   } = useAwaitingQueuePatients(admissionLocation);
 
+  const locationItems = React.useMemo(() => {
+    return locations.map((location) => ({
+      id: location.ward.uuid,
+      text: location.ward.display,
+      ...location,
+    }));
+  }, [locations]);
+
   const isInitialDataLoading = React.useMemo(() => {
     return (
       isLoadingLocation ||
@@ -56,14 +64,6 @@ const HomeViewComponent: React.FC = () => {
     mutateAdmissionLocation();
     mutateAll();
   }, [mutateAdmissionLocation, mutateAll]);
-
-  const locationItems = React.useMemo(() => {
-    return locations.map((location) => ({
-      id: location.ward.uuid,
-      text: location.ward.display,
-      ...location,
-    }));
-  }, [locations]);
 
   React.useEffect(() => {
     if (locationItems?.length === 1 && !selectedLocation) {

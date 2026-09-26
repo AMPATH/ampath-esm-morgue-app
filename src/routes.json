@@ -52,7 +52,9 @@
       "component": "mortuaryDashboardLink",
       "name": "mortuary-dashboard-link",
       "slot": "homepage-dashboard-slot",
-      "privileges": ["O3 View Mortuary Dashboard"],
+      "privileges": [
+        "O3 View Mortuary Dashboard"
+      ],
       "meta": {
         "name": "mortuary",
         "slot": "mortuary-dashboard-slot",
@@ -63,7 +65,26 @@
       "name": "morgue-dashboard",
       "component": "morgueDashboard",
       "slot": "mortuary-dashboard-slot",
-      "privileges": ["O3 View Mortuary Dashboard"]
+      "privileges": [
+        "O3 View Mortuary Dashboard"
+      ]
+    },
+    {
+      "slot": "system-admin-page-card-link-slot",
+      "component": "morgueAdministrationCardLink",
+      "name": "morgue-admin-card-link"
+    },
+    {
+      "name": "storage-units-left-panel-link",
+      "component": "storageUnitsLeftPanelLink",
+      "slot": "morgue-management-left-panel-slot",
+      "order": 1
+    },
+    {
+      "name": "compartments-left-panel-link",
+      "component": "compartmentsLeftPanelLink",
+      "slot": "morgue-management-left-panel-slot",
+      "order": 2
     }
   ],
   "workspaces": [
@@ -127,6 +148,10 @@
     {
       "component": "root",
       "route": "morgue"
+    },
+    {
+      "component": "morgueManagementHome",
+      "route": "morgue-management"
     }
   ]
 }
