@@ -10,6 +10,8 @@ import {
     OverflowMenuItem,
     Pagination,
     Search,
+    Select,
+    SelectItem,
     Table,
     TableBody,
     TableCell,
@@ -26,13 +28,14 @@ import {
     getCoreTranslation,
     isDesktop,
     launchWorkspace2,
+    showSnackbar,
     useConfig,
     useLayoutType,
     usePagination,
     type LayoutType,
 } from '@openmrs/esm-framework';
 import styles from '../morgue-management.scss';
-import { useStorageUnits, useCompartments } from '../morgue-management.resource';
+import { useStorageUnits, useCompartments, voidCompartment } from '../morgue-management.resource';
 import { Compartment, type StorageUnit } from '../types';
 import { ConfigObject } from '../../config-schema';
 
@@ -48,6 +51,7 @@ interface FilterableTableHeaderProps {
 const Compartments = () => {
     const { t } = useTranslation();
     const [storageUnitUuid, setStorageUnitUuid] = useState("");
+    const { storageUnits } = useStorageUnits();
     const { compartments, isLoading, isValidating, error, mutate } = useCompartments(storageUnitUuid);
     const layout = useLayoutType();
     const { pageSize: configuredPageSize } = useConfig<ConfigObject>();
@@ -55,6 +59,12 @@ const Compartments = () => {
     const responsiveSize = isDesktop(layout) ? 'lg' : 'sm';
     const pageSizes = [10, 20, 30, 40, 50];
     const [pageSize, setPageSize] = useState(configuredPageSize ?? 10);
+
+    React.useEffect(() => {
+        if (!storageUnitUuid && storageUnits.length === 1) {
+            setStorageUnitUuid(storageUnits[0].uuid);
+        }
+    }, [storageUnitUuid, storageUnits]);
 
     const headerData = [
         {
@@ -69,6 +79,7 @@ const Compartments = () => {
 
     const launchCompartmentForm = useCallback(() => {
         launchWorkspace2('compartment-form', {
+            storageUnitUuid,
             onWorkspaceClose: mutate,
         });
     }, [mutate]);
@@ -91,8 +102,7 @@ const Compartments = () => {
     }, [searchString, compartments]);
 
     const { paginated, goTo, results, currentPage } = usePagination<Compartment>(searchResults, pageSize);
-    const rowData = [];
-
+    const rowData: Array<{ id: string; uuid: string; name: string; status: string }> = [];
     if (results) {
         results.forEach((result) => {
             const s = {
@@ -106,7 +116,7 @@ const Compartments = () => {
     }
 
     const handleSearch = useCallback(
-        (e) => {
+        (e: React.ChangeEvent<HTMLInputElement>) => {
             goTo(1);
             setSearchString(e.target.value);
         },
@@ -122,6 +132,25 @@ const Compartments = () => {
         },
         [mutate],
     );
+
+    const handleVoid = useCallback(async (compartment: Compartment) => {
+        const reason = window.prompt(t('voidCompartmentReason', 'Enter a reason for voiding this compartment'));
+        if (!reason?.trim()) {
+            return;
+        }
+
+        try {
+            await voidCompartment(compartment.uuid, reason.trim());
+            await mutate();
+            showSnackbar({ kind: 'success', title: t('success', 'Success'), subtitle: t('compartmentVoided', 'Compartment voided') });
+        } catch (error) {
+            showSnackbar({
+                kind: 'error',
+                title: t('error', 'Error'),
+                subtitle: error instanceof Error ? error.message : t('unknownError', 'An unknown error occurred'),
+            });
+        }
+    }, [mutate, t]);
 
     if (isLoading) {
         return (
@@ -139,16 +168,38 @@ const Compartments = () => {
 
     if (compartments.length === 0) {
         return (
-            <EmptyCard
-                displayText={t('compartments__lower', 'Compartments')}
-                headerTitle={t('compartment', 'Compartment')}
-                launchForm={launchCompartmentForm}
-            />
+            <div className={styles.serviceContainer}>
+                <Select
+                    id="compartments-storage-unit"
+                    labelText={t('storageUnit', 'Storage unit')}
+                    value={storageUnitUuid}
+                    onChange={(event) => setStorageUnitUuid(event.target.value)}>
+                    <SelectItem value="" text={t('selectStorageUnit', 'Select a storage unit')} />
+                    {storageUnits.map((unit) => <SelectItem key={unit.uuid} value={unit.uuid} text={unit.display} />)}
+                </Select>
+                {storageUnitUuid ? (
+                    <EmptyCard
+                        displayText={t('compartments__lower', 'Compartments')}
+                        headerTitle={t('compartment', 'Compartment')}
+                        launchForm={launchCompartmentForm}
+                    />
+                ) : (
+                    <p>{t('selectStorageUnitToViewCompartments', 'Select a storage unit to view or add its compartments.')}</p>
+                )}
+            </div>
         );
     }
 
     return (
         <div className={styles.serviceContainer}>
+            <Select
+                id="compartments-storage-unit"
+                labelText={t('storageUnit', 'Storage unit')}
+                value={storageUnitUuid}
+                onChange={(event) => setStorageUnitUuid(event.target.value)}>
+                <SelectItem value="" text={t('selectStorageUnit', 'Select a storage unit')} />
+                {storageUnits.map((unit) => <SelectItem key={unit.uuid} value={unit.uuid} text={unit.display} />)}
+            </Select>
             <FilterableTableHeader
                 handleSearch={handleSearch}
                 isValidating={isValidating}
@@ -183,11 +234,7 @@ const Compartments = () => {
                             </TableHead>
                             <TableBody>
                                 {rows.map((row) => (
-                                    <TableRow
-                                        key={row.id}
-                                        {...getRowProps({
-                                            row,
-                                        })}>
+                                    <TableRow {...getRowProps({ row })}>
                                         {row.cells.map((cell) => (
                                             <TableCell key={cell.id}>{cell.value}</TableCell>
                                         ))}
@@ -196,7 +243,18 @@ const Compartments = () => {
                                                 <OverflowMenuItem
                                                     className={styles.menuItem}
                                                     itemText={t('editCompartment', 'Edit compartment')}
-                                                    onClick={() => handleEdit(results.find((result) => result.uuid === row.id))}
+                                                    onClick={() => {
+                                                        const compartment = results.find((result) => result.uuid === row.id);
+                                                        if (compartment) handleEdit(compartment);
+                                                    }}
+                                                />
+                                                <OverflowMenuItem
+                                                    className={styles.menuItem}
+                                                    itemText={t('voidCompartment', 'Void compartment')}
+                                                    onClick={() => {
+                                                        const compartment = results.find((result) => result.uuid === row.id);
+                                                        if (compartment) handleVoid(compartment);
+                                                    }}
                                                 />
                                             </OverflowMenu>
                                         </TableCell>
@@ -259,7 +317,7 @@ function FilterableTableHeader({
                         [styles.tabletHeading]: !isDesktop(layout),
                         [styles.desktopHeading]: isDesktop(layout),
                     })}>
-                    <h4>{t('storageUnitList', 'Storage unit list')}</h4>
+                    <h4>{t('compartmentList', 'Compartment list')}</h4>
                 </div>
                 <div className={styles.backgroundDataFetchingIndicator}>
                     <span>{isValidating ? <InlineLoading /> : null}</span>

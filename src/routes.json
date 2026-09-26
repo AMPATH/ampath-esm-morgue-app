@@ -134,6 +134,32 @@
       "canHide": true
     }
   ],
+  "workspaceGroups2": [
+    {
+      "name": "morgue-management-workspace-group",
+      "persistence": "closable",
+      "scopePattern": "^/morgue-management"
+    }
+  ],
+  "workspaceWindows2": [
+    {
+      "name": "morgue-management-workspace-window",
+      "group": "morgue-management-workspace-group",
+      "width": "narrow"
+    }
+  ],
+  "workspaces2": [
+    {
+      "name": "storage-unit-form",
+      "component": "storageUnitForm",
+      "window": "morgue-management-workspace-window"
+    },
+    {
+      "name": "compartment-form",
+      "component": "compartmentForm",
+      "window": "morgue-management-workspace-window"
+    }
+  ],
   "modals": [
     {
       "name": "print-confirmation-modal",
