@@ -16,6 +16,7 @@ import {
   RadioButton,
   RadioButtonGroup,
   Search,
+  Select,
   SelectItem,
   Stack,
   Tag,
@@ -51,6 +52,7 @@ import {
 } from './admit-deceased-person.resource';
 import classNames from 'classnames';
 import { type MortuaryLocationResponse, type MortuaryPatient } from '../../types';
+import { useCompartments, useStorageUnits } from '../../morgue-management/morgue-management.resource';
 
 interface AdmitDeceasedPersonProps {
   closeWorkspace: () => void;
@@ -70,19 +72,31 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStorageUnitUuid, setSelectedStorageUnitUuid] = useState('');
   const { time: defaultTime, period: defaultPeriod } = getCurrentTime();
   const config = useConfig<ConfigObject>();
 
   const { data: visitTypes, isLoading: isLoadingVisitTypes } = useVisitType();
   const { lineItems, isLoading: isLoadingLineItems } = useBillableItems();
   const { admitBody } = useMortuaryOperation(mortuaryLocation?.ward?.uuid);
+  const { currentProvider, sessionLocation } = useSession();
+  const {
+    storageUnits,
+    isLoading: isLoadingStorageUnits,
+    error: storageUnitsError,
+  } = useStorageUnits(sessionLocation?.uuid);
+  const availableStorageUnits = storageUnits;
+  const {
+    compartments,
+    isLoading: isLoadingCompartments,
+    error: compartmentsError,
+  } = useCompartments(selectedStorageUnitUuid);
 
   const { cashPoints } = useCashPoint();
   const cashPointUuid = cashPoints?.[0]?.uuid ?? '';
   const patientUuid = patientData?.patient?.uuid || deceasedPatientUuid;
   // const { insuranceSchemes } = useConfig({ externalModuleName: '@openmrs/esm-billing-app' });
   const { paymentModes, isLoading: isLoadingPaymentModes } = usePaymentModes();
-  const { currentProvider } = useSession();
 
   const {
     morgueVisitTypeUuid,
@@ -109,6 +123,7 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
     control,
     watch,
     handleSubmit,
+    setValue,
     formState: { errors, isDirty, isSubmitting },
   } = useForm({
     resolver: zodResolver(deceasedPatientAdmitSchema),
@@ -135,7 +150,7 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
       insuranceScheme: '',
       policyNumber: '',
       services: [],
-      availableCompartment: 0,
+      availableCompartment: '',
     },
   });
 
@@ -155,20 +170,15 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
   const bodyEmbalmmentOption = deadBodyPreservationTypeUuid.find((type) => type.label === 'Body embalment');
   const isBodyEmbalmmentSelected = deadBodyPreservation === bodyEmbalmmentOption?.concept;
 
-  const filteredBeds = useMemo(() => {
-    if (!mortuaryLocation?.bedLayouts) {
-      return [];
-    }
+  const filteredCompartments = useMemo(() => {
+    const vacantCompartments = compartments.filter((compartment) => compartment.status === 'VACANT');
     if (!searchTerm) {
-      return mortuaryLocation.bedLayouts;
+      return vacantCompartments;
     }
-    return mortuaryLocation.bedLayouts.filter(
-      (bed) =>
-        bed.bedNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        bed.bedType?.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        bed.status?.toLowerCase().includes(searchTerm.toLowerCase()),
+    return vacantCompartments.filter((compartment) =>
+      `${compartment.display} ${compartment.storageUnit?.display ?? ''}`.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-  }, [mortuaryLocation?.bedLayouts, searchTerm]);
+  }, [compartments, searchTerm]);
 
   const onSubmit = async (data) => {
     const serviceUuids = data.services;
@@ -176,12 +186,8 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
       .filter((item) => serviceUuids.includes(item.uuid))
       .map((item, index) => ({
         billableService: item.uuid,
-        quantity: 1,
-        price: item.servicePrices[0]?.price || '0.000',
-        priceName: 'Default',
-        priceUuid: item.servicePrices[0]?.uuid || '',
-        lineItemOrder: index,
-        paymentStatus: 'PENDING',
+        quantity: data.quantity || 1,
+        priceUuid: item.servicePrices[0]?.uuid,
       }));
 
     try {
@@ -189,6 +195,10 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
         return;
       }
       const { admissionEncounter, compartment } = await admitBody(patientUuid, data);
+
+      if (admissionEncounter && compartment) {
+        await mutated();
+      }
 
       if (admissionEncounter && compartment) {
         showSnackbar({
@@ -212,7 +222,6 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
         subtitle: t('admissionBillSuccessMessage', "Patient's bill has been created successfully"),
         kind: 'success',
       });
-      mutated();
       closeWorkspace();
     } catch (error) {
       showSnackbar({
@@ -251,34 +260,82 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
 
           <ResponsiveWrapper>
             <FormGroup legendText={t('assignCompartment', 'Assign compartment *')}>
+              <Select
+                id="admission-storage-unit"
+                labelText={t('storageUnit', 'Storage unit *')}
+                value={selectedStorageUnitUuid}
+                disabled={isLoadingStorageUnits || availableStorageUnits.length === 0}
+                onChange={(event) => {
+                  setSelectedStorageUnitUuid(event.target.value);
+                  setSearchTerm('');
+                  setValue('availableCompartment', '');
+                }}>
+                <SelectItem value="" text={t('selectStorageUnit', 'Select a storage unit')} />
+                {availableStorageUnits.map((storageUnit) => (
+                  <SelectItem key={storageUnit.uuid} value={storageUnit.uuid} text={storageUnit.display} />
+                ))}
+              </Select>
               <Search
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder={t('searchForCompartments', 'Search for a compartment')}
                 value={searchTerm}
                 labelText=""
+                disabled={!selectedStorageUnitUuid}
               />
               <div className={styles.compartmentListContainer}>
-                {filteredBeds.length > 0 ? (
+                {isLoadingStorageUnits ? (
+                  <InlineLoading status="active" description={t('loadingStorageUnits', 'Loading storage units...')} />
+                ) : storageUnitsError ? (
+                  <InlineNotification
+                    kind="error"
+                    title={t('errorLoadingStorageUnits', 'Unable to load storage units')}
+                    subtitle={storageUnitsError.message}
+                    lowContrast
+                  />
+                ) : availableStorageUnits.length === 0 ? (
+                  <Layer>
+                    <Tile className={styles.emptyStateTile}>
+                      <p className={styles.emptyStateContent}>
+                        {t('noStorageUnitsForLocation', 'No storage units are configured for this location.')}
+                      </p>
+                    </Tile>
+                  </Layer>
+                ) : !selectedStorageUnitUuid ? (
+                  <Layer>
+                    <Tile className={styles.emptyStateTile}>
+                      <p className={styles.emptyStateContent}>{t('selectStorageUnitFirst', 'Select a storage unit first')}</p>
+                    </Tile>
+                  </Layer>
+                ) : isLoadingCompartments ? (
+                  <InlineLoading status="active" description={t('loadingCompartments', 'Loading compartments...')} />
+                ) : compartmentsError ? (
+                  <InlineNotification
+                    kind="error"
+                    title={t('errorLoadingCompartments', 'Unable to load compartments')}
+                    subtitle={compartmentsError.message}
+                    lowContrast
+                  />
+                ) : filteredCompartments.length > 0 ? (
                   <Controller
                     control={control}
                     name="availableCompartment"
                     render={({ field }) => (
                       <div className={styles.radioButtonGroup}>
-                        {filteredBeds.map((bed) => (
-                          <div key={bed.bedId} className={styles.compartmentOption}>
+                        {filteredCompartments.map((compartment) => (
+                          <div key={compartment.uuid} className={styles.compartmentOption}>
                             <RadioButton
-                              id={`compartment-${bed.bedId}`}
-                              labelText={bed.bedNumber}
-                              value={bed.bedId}
-                              checked={field.value === bed.bedId}
-                              onChange={() => field.onChange(bed.bedId)}
+                              id={`compartment-${compartment.uuid}`}
+                              labelText={compartment.display}
+                              value={compartment.uuid}
+                              checked={field.value === compartment.uuid}
+                              onChange={() => field.onChange(compartment.uuid)}
                             />
                             <div className={styles.compartmentTags}>
-                              <Tag type={bed.bedType?.display === 'VIP' ? 'green' : 'blue'} size="sm">
-                                {bed.bedType?.displayName || ''}
+                              <Tag type="blue" size="sm">
+                                {compartment.storageUnit?.display || ''}
                               </Tag>
-                              <Tag type={bed.status === 'AVAILABLE' ? 'green' : 'red'} size="sm">
-                                {bed?.status || ''}
+                              <Tag type="green" size="sm">
+                                {compartment.status}
                               </Tag>
                             </div>
                           </div>

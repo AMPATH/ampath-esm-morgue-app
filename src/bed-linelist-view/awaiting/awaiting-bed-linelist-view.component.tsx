@@ -26,8 +26,7 @@ import { useAwaitingPatients } from '../../home/home.resource';
 import EmptyMorgueAdmission from '../../empty-state/empty-morgue-admission.component';
 
 interface AwaitingBedLineListViewProps {
-  awaitingQueueDeceasedPatients: Array<MortuaryPatient>;
-  mortuaryLocation: MortuaryLocationResponse;
+  awaitingAdmission: Array<MortuaryPatient>;
   isLoading: boolean;
   paginated?: boolean;
   initialPageSize?: number;
@@ -38,9 +37,8 @@ interface AwaitingBedLineListViewProps {
 }
 
 const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
-  awaitingQueueDeceasedPatients,
+  awaitingAdmission,
   isLoading,
-  mortuaryLocation,
   paginated = true,
   initialPageSize = 10,
   pageSizes = [10, 20, 30, 40, 50],
@@ -55,8 +53,6 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [currPageSize, setCurrPageSize] = useState(initialPageSize);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const trulyAwaitingPatients = useAwaitingPatients(awaitingQueueDeceasedPatients);
 
   const headers = [
     { key: 'admissionDate', header: t('dateQueued', 'Date Queued') },
@@ -79,11 +75,11 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
   };
 
   const allRows = useMemo(() => {
-    if (!trulyAwaitingPatients || trulyAwaitingPatients.length === 0) {
+    if (!awaitingAdmission || awaitingAdmission.length === 0) {
       return [];
     }
 
-    const rows = trulyAwaitingPatients.map((mortuaryPatient, index) => {
+    const rows = awaitingAdmission.map((mortuaryPatient, index) => {
       const patientUuid = mortuaryPatient?.person?.uuid || `patient-${index}`;
       const patientName = mortuaryPatient?.person?.display || '-';
       const gender = mortuaryPatient?.person?.gender || '-';
@@ -111,7 +107,7 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
     });
 
     return rows;
-  }, [trulyAwaitingPatients]);
+  }, [awaitingAdmission]);
 
   const filteredRows = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -140,7 +136,7 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
     launchWorkspace('admit-deceased-person-form', {
       workspaceTitle: t('admissionForm', 'Admission form'),
       patientData,
-      mortuaryLocation,
+      // mortuaryLocation,
       mutated,
     });
   };
@@ -173,7 +169,7 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
         patientUuid: patientUuid,
         bedId: 0,
         mutate: mutated,
-        mortuaryLocation,
+        // mortuaryLocation,
         directDischarge: true
       });
     }
@@ -187,7 +183,7 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
     );
   }
 
-  if (!trulyAwaitingPatients || trulyAwaitingPatients.length === 0) {
+  if (!awaitingAdmission || awaitingAdmission.length === 0) {
     return (
       <div>
         <EmptyMorgueAdmission title={t('noDeceasedPatients', 'No deceased patients awaiting admission found')} />
@@ -227,7 +223,7 @@ const AwaitingBedLineListView: React.FC<AwaitingBedLineListViewProps> = ({
                   </TableHead>
                   <TableBody>
                     {rows.map((row) => {
-                      const patientData = trulyAwaitingPatients.find(
+                      const patientData = awaitingAdmission.find(
                         (patient) => patient?.person?.uuid === row.id,
                       );
                       const patientName = patientData?.person?.display || '';

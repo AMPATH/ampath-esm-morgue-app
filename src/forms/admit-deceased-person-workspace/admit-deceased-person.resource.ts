@@ -233,8 +233,6 @@ export const useMortuaryOperation = (location?: string) => {
         ...(obs.length > 0 && { obs }),
       };
 
-      console.log(encounterPayload);
-
       return openmrsFetch<Encounter>(`${restBaseUrl}/encounter`, {
         method: 'POST',
         headers: {
@@ -261,24 +259,35 @@ export const useMortuaryOperation = (location?: string) => {
     [],
   );
 
+  const assignPatientToStorageCompartment = useCallback(
+    async (patientUuid: string, compartmentUuid: string) =>
+      openmrsFetch(`${restBaseUrl}/morgue/storage-assignment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patient: patientUuid, compartment: compartmentUuid }),
+      }),
+    [],
+  );
+
   const admitBody = useCallback(
     async (patientUuid: string, data: z.infer<typeof deceasedPatientAdmitSchema>) => {
       try {
         const admissionEncounter = await createMortuaryAdmissionEncounter(patientUuid, data);
-        const encounterUuid = admissionEncounter?.data?.uuid;
-        const compartment = await assignDeceasedToCompartment(patientUuid, data.availableCompartment, encounterUuid);
+        const compartment = await assignPatientToStorageCompartment(patientUuid, data.availableCompartment);
         return { admissionEncounter, compartment };
       } catch (error) {
         throw error;
       }
     },
-    [assignDeceasedToCompartment, createMortuaryAdmissionEncounter],
+    [assignPatientToStorageCompartment, createMortuaryAdmissionEncounter],
   );
 
-  const removeDeceasedFromCompartment = useCallback(
-    async (patientUuid: string, bedId: number) =>
-      openmrsFetch(`${restBaseUrl}/beds/${bedId}?patientUuid=${patientUuid}`, {
-        method: 'DELETE',
+  const dischargeStorageAssignment = useCallback(
+    async (assignmentUuid: string) =>
+      openmrsFetch(`${restBaseUrl}/morgue/storage-assignment/${assignmentUuid}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
       }),
     [],
   );
@@ -310,11 +319,15 @@ export const useMortuaryOperation = (location?: string) => {
     async (
       visit: Visit,
       queueEntry: MappedVisitQueueEntry,
-      bedId: number,
       data: z.infer<typeof dischargeFormSchema>,
-      directDischarge: boolean
+      directDischarge: boolean,
+      storageAssignmentUuid?: string,
     ) => {
       try {
+        if (!directDischarge && !storageAssignmentUuid) {
+          throw new Error('Cannot discharge compartment occupancy without a storage assignment UUID.');
+        }
+
         const dischargeDateTime =
           data.dischargeType === 'dispose'
             ? new Date()
@@ -324,14 +337,16 @@ export const useMortuaryOperation = (location?: string) => {
             });
 
         const dischargeEncounter = await createDischargeEncounter(visit, data, dischargeDateTime);
-        const compartment = directDischarge ? null : await removeDeceasedFromCompartment(visit?.patient?.uuid, bedId);
+        const compartment = directDischarge
+          ? null
+          : await dischargeStorageAssignment(storageAssignmentUuid!);
 
         return { dischargeEncounter, compartment };
       } catch (error) {
         throw error;
       }
     },
-    [createDischargeEncounter, endCurrentVisit, removeDeceasedFromCompartment, parseDischargeDateTime],
+    [createDischargeEncounter, dischargeStorageAssignment, parseDischargeDateTime],
   );
 
   const createEncounterForCompartmentSwap = useCallback(
@@ -368,7 +383,7 @@ export const useMortuaryOperation = (location?: string) => {
     admitBody,
     createEncounterForCompartmentSwap,
     assignDeceasedToCompartment,
-    removeDeceasedFromCompartment,
+    dischargeStorageAssignment,
     dischargeBody,
     isLoadingEmrConfiguration,
     errorFetchingEmrConfiguration,

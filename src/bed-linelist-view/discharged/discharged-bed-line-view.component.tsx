@@ -26,9 +26,10 @@ import usePatients, { useMortuaryDischargeEncounter } from '../../bed-layout/dis
 import { EmptyState } from '@openmrs/esm-patient-common-lib';
 import EmptyMorgueAdmission from '../../empty-state/empty-morgue-admission.component';
 import { Printer } from '@carbon/react/icons';
+import { StorageAssignment } from '../../morgue-management/types';
 
 interface DischargedBedLineListViewProps {
-  AdmittedDeceasedPatient: MortuaryLocationResponse | null;
+  discharged: StorageAssignment[];
   isLoading: boolean;
   paginated?: boolean;
   initialPageSize?: number;
@@ -38,7 +39,7 @@ interface DischargedBedLineListViewProps {
 }
 
 const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
-  AdmittedDeceasedPatient,
+  discharged,
   isLoading,
   paginated = true,
   initialPageSize = 10,
@@ -58,14 +59,10 @@ const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
   const {
     dischargedPatientUuids,
     encounters,
-    isLoading: encountersLoading,
-    error: encountersError,
-  } = useMortuaryDischargeEncounter(morgueDischargeEncounterTypeUuid, AdmittedDeceasedPatient);
+  } = useMortuaryDischargeEncounter(morgueDischargeEncounterTypeUuid, discharged);
 
   const {
     patients: dischargedPatients,
-    isLoading: patientsLoading,
-    error: patientsError,
   } = usePatients(dischargedPatientUuids || []);
 
   const headers = [
@@ -200,7 +197,7 @@ const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
     setCurrentPage(1);
   }, []);
 
-  const isLoadingData = isLoading || encountersLoading || patientsLoading;
+  const isLoadingData = isLoading;
   const hasSearchTerm = searchTerm.trim().length > 0;
   const hasNoSearchResults = hasSearchTerm && filteredRows.length === 0;
   const hasPatients = dischargedPatients && dischargedPatients.length > 0;
@@ -214,7 +211,7 @@ const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
     );
   }
 
-  if (encountersError || patientsError) {
+  if (!dischargedPatients) {
     return (
       <div className={styles.emptyState}>
         <EmptyState

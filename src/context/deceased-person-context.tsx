@@ -1,16 +1,15 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { type Patient, type MortuaryPatient, type MortuaryLocationResponse, type EnhancedPatient } from '../types';
+import { type Patient, type MortuaryPatient, type EnhancedPatient } from '../types';
 
 interface PatientContextValue {
-  mortuaryLocation: MortuaryLocationResponse | null;
   isLoading: boolean;
   mutate?: () => void;
   onAdmit?: (patient: EnhancedPatient | MortuaryPatient | Patient) => void;
-  onPostmortem?: (patientUuid: string, bedInfo?: { bedNumber: string; bedId: number }) => void;
-  onDischarge?: (patientUuid: string, bedId?: number) => void;
-  onSwapCompartment?: (patientUuid: string, bedId?: number) => void;
+  onPostmortem?: (patientUuid: string, bedInfo?: { bedNumber: string; bedId: string | number }) => void;
+  onDischarge?: (patientUuid: string, compartmentUuid?: string | number, storageAssignmentUuid?: string) => void;
+  onSwapCompartment?: (patientUuid: string, compartmentUuid?: string | number) => void;
   onPrintGatePass?: (patient: EnhancedPatient | Patient, encounterDate?: string) => void;
-  onViewDetails?: (patientUuid: string, bedInfo?: { bedNumber: string; bedId: number }) => void;
+  onViewDetails?: (patientUuid: string, bedInfo?: { bedNumber: string; bedId: string | number }) => void;
 }
 
 const PatientContext = createContext<PatientContextValue | undefined>(undefined);

@@ -14,18 +14,25 @@ import styles from './summary.scss';
 import MetricsCard from '../metrics/metrics-card.component';
 
 interface SummaryProps {
+  waitingToBeReceivedCount: number,
   awaitingQueueCount: number;
   admittedCount: number;
   dischargedCount: number;
   isLoading?: boolean;
 }
 
-const Summary: React.FC<SummaryProps> = ({ awaitingQueueCount, admittedCount, dischargedCount, isLoading = false }) => {
+const Summary: React.FC<SummaryProps> = ({ waitingToBeReceivedCount, awaitingQueueCount, admittedCount, dischargedCount, isLoading = false }) => {
   const { t } = useTranslation();
 
   return (
     <>
       <div className={styles.cardContainer}>
+        <MetricsCard
+          headerLabel={isLoading ? <RadioButtonSkeleton /> : t('waitingToBeReceivedHeader', 'Waiting to be received')}
+          label={isLoading ? <SkeletonText /> : t('totalCount', 'total')}
+          value={isLoading ? <InlineLoading /> : waitingToBeReceivedCount.toString()}
+          cardName = "WAITING-TO-BE-RECEIVED"
+        />
         <MetricsCard
           headerLabel={isLoading ? <RadioButtonSkeleton /> : t('awaitingAdmissionHeader', 'Awaiting Admission')}
           label={isLoading ? <SkeletonText /> : t('totalCount', 'total')}

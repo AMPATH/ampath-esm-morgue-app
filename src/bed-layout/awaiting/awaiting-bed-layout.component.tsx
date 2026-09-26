@@ -12,21 +12,18 @@ import { PatientProvider } from '../../context/deceased-person-context';
 import BedCard from '../../bed/bed.component';
 
 interface BedLayoutProps {
-  awaitingQueueDeceasedPatients: MortuaryPatient[];
-  mortuaryLocation: MortuaryLocationResponse;
+  awaitingAdmission: MortuaryPatient[];
   isLoading: boolean;
   mutated?: () => void;
 }
 
 const AwaitingBedLayout: React.FC<BedLayoutProps> = ({
-  awaitingQueueDeceasedPatients,
-  mortuaryLocation,
+  awaitingAdmission,
   isLoading,
   mutated,
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
-  const trulyAwaitingPatients = useAwaitingPatients(awaitingQueueDeceasedPatients);
   const isTablet = useLayoutType() === 'tablet';
   const controlSize = isTablet ? 'md' : 'sm';
 
@@ -35,12 +32,12 @@ const AwaitingBedLayout: React.FC<BedLayoutProps> = ({
   };
 
   const filteredPatients = useMemo(() => {
-    if (!trulyAwaitingPatients || !searchTerm.trim()) {
-      return trulyAwaitingPatients || [];
+    if (!awaitingAdmission || !searchTerm.trim()) {
+      return awaitingAdmission || [];
     }
 
     const lowerSearchTerm = searchTerm.toLowerCase().trim();
-    return trulyAwaitingPatients.filter((mortuaryPatient) => {
+    return awaitingAdmission.filter((mortuaryPatient) => {
       const patientName = mortuaryPatient?.person?.display?.toLowerCase() || '';
       const gender = mortuaryPatient?.person?.gender?.toLowerCase() || '';
       const patientId = mortuaryPatient?.person?.uuid?.toLowerCase() || '';
@@ -53,7 +50,7 @@ const AwaitingBedLayout: React.FC<BedLayoutProps> = ({
         causeOfDeath.includes(lowerSearchTerm)
       );
     });
-  }, [trulyAwaitingPatients, searchTerm]);
+  }, [awaitingAdmission, searchTerm]);
 
   const handleAdmit = (enhancedPatient: EnhancedPatient) => {
     const originalPatient = getOriginalPatient(enhancedPatient);
@@ -61,14 +58,13 @@ const AwaitingBedLayout: React.FC<BedLayoutProps> = ({
       launchWorkspace('admit-deceased-person-form', {
         workspaceTitle: t('admissionForm', 'Admission form'),
         patientData: originalPatient,
-        mortuaryLocation,
+        // mortuaryLocation,
         mutated,
       });
     }
   };
 
   const patientContextValue = {
-    mortuaryLocation,
     isLoading,
     mutate: mutated,
     onAdmit: handleAdmit,
@@ -83,7 +79,7 @@ const AwaitingBedLayout: React.FC<BedLayoutProps> = ({
     );
   }
 
-  if (trulyAwaitingPatients.length) {
+  if (awaitingAdmission.length) {
     return (
       <div>
         <EmptyMorgueAdmission title={t('noAwaitingPatients', 'No awaiting patients found')} />

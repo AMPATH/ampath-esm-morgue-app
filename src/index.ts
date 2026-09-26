@@ -10,6 +10,12 @@ import { createLeftPanelLink } from './left-panel/morgue-left-panel-link.compone
 import FormEntryWorkspace from './forms/form-entry-workspace/form-entry-workspace.workspace';
 import PrintPostMortemOverflowMenuItem from './extension/overflow-menu-item-postmortem/print-postmorterm-report.component';
 import { mortuaryDashboardMeta } from './dashboard.meta';
+import MorgueAdminCardLink from './morgue-admin-card-link.component';
+import { createAdminLeftPanelLink } from './left-panel/admin/morgue-admin-left-panel-link.component';
+import { Archive, Categories } from '@carbon/react/icons';
+import MorgueManagementHome from './morgue-management/morgue-management-home.component';
+import StorageUnitFormWorkspace from './morgue-management/storage-units/storage-unit-form.workspace';
+import CompartmentFormWorkspace from './morgue-management/compartments/compartment-form.workspace';
 const moduleName = '@ampath/esm-morgue-app';
 
 const options = {
@@ -74,3 +80,32 @@ export const autopsyReportModal = getAsyncLifecycle(
 );
 
 export const printPostMortemOverflowMenuItem = getSyncLifecycle(PrintPostMortemOverflowMenuItem, options);
+
+export const morgueManagementHome = getSyncLifecycle(MorgueManagementHome, options);
+
+export const morgueAdministrationCardLink = getSyncLifecycle(MorgueAdminCardLink, options);
+
+export const storageUnitForm = getAsyncLifecycle(() => import('./morgue-management/storage-units/storage-unit-form.workspace'), options);
+export const compartmentForm = getAsyncLifecycle(() => import('./morgue-management/compartments/compartment-form.workspace'), options);
+
+// t('storageUnits', 'Storage units')
+export const storageUnitsLeftPanelLink = getSyncLifecycle(
+  createAdminLeftPanelLink({
+    name: 'storage-units',
+    title: 'storageUnits',
+    path: 'storage-units',
+    icon: Archive,
+  }),
+  options,
+);
+
+// t('compartments', 'Compartments')
+export const compartmentsLeftPanelLink = getSyncLifecycle(
+  createAdminLeftPanelLink({
+    name: 'compartments',
+    title: 'compartments',
+    path: 'compartments',
+    icon: Categories,
+  }),
+  options,
+);

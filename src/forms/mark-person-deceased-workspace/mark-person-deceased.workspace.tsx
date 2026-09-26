@@ -40,12 +40,14 @@ interface MarkPatientDeceasedFormProps {
     closeWorkspace: () => void;
     patientData: MortuaryPatient;
     patientUuid?: string;
+    mutated?: () => void | Promise<unknown>;
 }
 
 const MarkPatientDeceasedForm: React.FC<MarkPatientDeceasedFormProps> = ({
     closeWorkspace,
     patientData,
-    patientUuid
+    patientUuid,
+    mutated,
 }) => {
     const { t } = useTranslation();
     const isTablet = useLayoutType() === 'tablet';
@@ -112,7 +114,7 @@ const MarkPatientDeceasedForm: React.FC<MarkPatientDeceasedFormProps> = ({
 
             markPersonDeceased(deathDate, patientUuid, causeOfDeath, nonCodedCauseOfDeath)
                 .then(() => {
-                    closeWorkspace();
+                    return Promise.resolve(mutated?.()).then(() => closeWorkspace());
                 })
                 .catch((error) => {
                     showSnackbar({
@@ -123,7 +125,7 @@ const MarkPatientDeceasedForm: React.FC<MarkPatientDeceasedFormProps> = ({
                     });
                 });
         },
-        [closeWorkspace, patientUuid, t],
+        [closeWorkspace, patientUuid, t, mutated],
     );
 
     const onError = (errors) => console.error(errors);

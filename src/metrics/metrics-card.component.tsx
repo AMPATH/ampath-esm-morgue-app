@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Layer, Tile } from '@carbon/react';
 import styles from './metrics-card.scss';
 
-type cardNames = "AWAITING" | "ADMITTED" | "DISCHARGED";
+type cardNames = "WAITING-TO-BE-RECEIVED" | "AWAITING" | "ADMITTED" | "DISCHARGED";
 interface MetricsCardProps {
   label: string | React.ReactNode;
   value: number | string | React.ReactNode;
