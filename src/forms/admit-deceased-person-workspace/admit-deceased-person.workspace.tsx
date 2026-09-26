@@ -197,6 +197,10 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
       const { admissionEncounter, compartment } = await admitBody(patientUuid, data);
 
       if (admissionEncounter && compartment) {
+        await mutated();
+      }
+
+      if (admissionEncounter && compartment) {
         showSnackbar({
           title: t('admissionSuccess', 'Deceased Admission'),
           subtitle: t('admissionSuccessMessage', 'Patient has been admitted to the mortuary successfully'),
@@ -218,7 +222,6 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
         subtitle: t('admissionBillSuccessMessage', "Patient's bill has been created successfully"),
         kind: 'success',
       });
-      mutated();
       closeWorkspace();
     } catch (error) {
       showSnackbar({

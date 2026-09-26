@@ -216,7 +216,7 @@ const DischargeForm: React.FC<DischargeFormProps> = ({
         isLowContrast: true,
       });
 
-      mutate();
+      await mutate();
       closeWorkspace();
     } catch (error) {
       let errorMessage = t('dischargeUnknownError', 'An unknown error occurred');

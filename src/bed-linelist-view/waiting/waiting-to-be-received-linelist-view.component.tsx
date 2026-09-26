@@ -134,6 +134,7 @@ const WaitingToBeReceivedLineListView: React.FC<WaitingToBeReceivedLineListViewP
             workspaceTitle: t('markDeceased', 'Mark patient deceased'),
             patientData: patientData,
             patientUuid: patientData?.patient?.uuid,
+            mutated,
         });
     };
 

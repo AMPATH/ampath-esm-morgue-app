@@ -257,6 +257,7 @@ const CustomContentSwitcher: React.FC<CustomContentSwitcherProps> = ({
                 workspaceTitle: t('markDeceased', 'Mark patient deceased'),
                 patientData: patientData,
                 patientUuid: selectedPatientUuid,
+                mutated: mutate,
                 closeWorkspace: () => { openAdmitWorkspace(patientData) }
               });
             }

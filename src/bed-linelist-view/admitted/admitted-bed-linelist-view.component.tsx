@@ -24,6 +24,7 @@ import { ConfigObject } from '../../config-schema';
 import { mutate as mutateSWR } from 'swr';
 import EmptyMorgueAdmission from '../../empty-state/empty-morgue-admission.component';
 import { StorageAssignment } from '../../morgue-management/types';
+import PostmortemReportExtensionSlot from '../../extension/postmortem-report-extension-slot.component';
 
 interface AdmittedBedLineListViewProps {
   admitted: StorageAssignment[];
@@ -213,7 +214,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
           patientUuid,
           compartmentUuid: compartment?.uuid,
           compartmentNumber: compartment?.display,
-          storageAssignmentUuid: adm?.uuid,
+          storageAssignmentUuid: compartment?.uuid,
           personUuid: patient.person?.uuid || '',
           searchableText: `${patientName} ${idNumber} ${gender} ${compartment?.display} ${adm?.compartment?.storageUnit?.display}`.toLowerCase(),
         });
@@ -375,6 +376,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
                                         onClick={() => handlePostmortem(rowData.patientUuid)}
                                         itemText={t('postmortemForm', 'Postmortem')}
                                       />
+                                      <PostmortemReportExtensionSlot patientUuid={rowData.patientUuid} />
                                       {!rowData.storageAssignmentUuid && (
                                         <OverflowMenuItem
                                           onClick={() => handleSwapCompartment(rowData.patientUuid, rowData?.compartmentUuid)}

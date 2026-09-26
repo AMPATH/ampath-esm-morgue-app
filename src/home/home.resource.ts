@@ -3,6 +3,7 @@ import {
   openmrsFetch,
   restBaseUrl,
   useSession,
+  useConfig,
 } from '@openmrs/esm-framework';
 import useSWR from 'swr';
 import {
@@ -15,6 +16,7 @@ import {
 import React, { useMemo, useEffect, useState } from 'react';
 import { useStorageAssignments } from '../morgue-management/morgue-management.resource';
 import usePatients from '../bed-layout/discharged/discharged-bed-layout.resource';
+import { type ConfigObject } from '../config-schema';
 
 interface MortuaryApiResponse {
   results: MortuaryPatient[];
@@ -30,10 +32,8 @@ export const useMorgueEncounters = () => {
     mutate: mutateAssignments,
   } = useStorageAssignments(sessionLocation?.sessionLocation?.uuid);
 
-  const mutateAll = React.useCallback(() => {
-    mutateWaiting();
-    mutateAwaiting();
-    mutateAssignments();
+  const mutateAll = React.useCallback(async () => {
+    await Promise.all([mutateWaiting(), mutateAwaiting(), mutateAssignments()]);
   }, [mutateWaiting, mutateAwaiting, mutateAssignments]);
 
   const filteredWaitingToBeReceived = waitingToBeReceived?.filter(val => !assignments?.some(ass => ass?.patient?.uuid === val?.patient?.uuid));
@@ -86,6 +86,20 @@ export const useAwaitingAdmission = () => {
     mutate,
   }
 }
+
+export const useHasPostmortemEncounter = (patientUuid?: string) => {
+  const { autopsyEncounterFormUuid } = useConfig<ConfigObject>();
+  const url = patientUuid && autopsyEncounterFormUuid
+    ? `${restBaseUrl}/encounter?patient=${encodeURIComponent(patientUuid)}&encounterType=${encodeURIComponent(autopsyEncounterFormUuid)}&v=ref&limit=1`
+    : null;
+  const { data, error, isLoading } = useSWR<FetchResponse<{ results: Array<{ uuid: string }> }>>(url, openmrsFetch);
+
+  return {
+    hasPostmortemEncounter: (data?.data?.results?.length ?? 0) > 0,
+    isLoading,
+    error,
+  };
+};
 
 export const useAwaitingQueuePatients = (admissionLocation?: MortuaryLocationResponse) => {
   const session = useSession();
