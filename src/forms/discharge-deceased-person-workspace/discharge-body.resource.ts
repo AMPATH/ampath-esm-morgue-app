@@ -5,6 +5,8 @@ import dayjs from 'dayjs';
 import sortBy from 'lodash-es/sortBy';
 import { useMemo } from 'react';
 
+const dischargeBillableServiceNames = new Set(['body stay', 'postmortem', 'cleaning']);
+
 export const usePersonAttributes = (personUuid: string) => {
   const { data, error, isLoading } = useSWR<FetchResponse<{ results: Patient['person']['attributes'] }>>(
     personUuid ? `${restBaseUrl}/person/${personUuid}/attribute` : null,
@@ -165,31 +167,25 @@ export const useBlockDischargeWithPendingBills = ({
 
     const pendingBills =
       bills?.filter((bill) => {
-        const isPending = bill.status === PaymentStatus.PENDING;
         const isNotVoided = !bill.voided;
-
-        let hasBalance = false;
-        if (bill.balance !== undefined) {
-          hasBalance = bill.balance > 0;
-        } else {
-          const totalAmount =
-            bill.lineItems?.reduce((sum, item) => {
-              return sum + (item as any).price * (item as any).quantity;
-            }, 0) || 0;
-
-          const totalPayments =
-            bill.totalPayments || bill.payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
-
-          const totalExempted = bill.totalExempted || 0;
-          const totalDeposits = bill.totalDeposits || 0;
-
-          const outstandingBalance = totalAmount - totalPayments - totalExempted - totalDeposits;
-          hasBalance = outstandingBalance > 0;
-        }
-
         const isNotClosed = bill.closed !== undefined ? !bill.closed : true;
+        const hasPendingDischargeService = bill.lineItems?.some((lineItem) => {
+          const item = lineItem as any;
+          const serviceName = (
+            item.billableService ??
+            ''
+          )
+            .trim()
+            .toLowerCase();
+          const isDischargeService = dischargeBillableServiceNames.has(serviceName);
+          const isLineItemPending = item.status
+            ? item.status === PaymentStatus.PENDING
+            : bill.status === PaymentStatus.PENDING;
 
-        return isPending && hasBalance && isNotVoided && isNotClosed;
+          return isDischargeService && isLineItemPending;
+        });
+
+        return hasPendingDischargeService && isNotVoided && isNotClosed;
       }) || [];
 
     const pendingBillsCount = pendingBills.length;

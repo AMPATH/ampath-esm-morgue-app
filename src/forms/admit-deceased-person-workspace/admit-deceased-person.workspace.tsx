@@ -43,7 +43,9 @@ import { getCurrentTime } from '../../utils/utils';
 import { ConfigObject } from '../../config-schema';
 import { DeceasedPatientHeader } from '../../deceased-patient-header/deceased-patient-header.component';
 import {
+  createBillLineItem,
   createPatientBill,
+  getPendingVisitBills,
   useBillableItems,
   useCashPoint,
   useMortuaryOperation,
@@ -181,19 +183,24 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
   }, [compartments, searchTerm]);
 
   const onSubmit = async (data) => {
-    const serviceUuids = data.services;
-    const billableItems = lineItems
-      .filter((item) => serviceUuids.includes(item.uuid))
-      .map((item, index) => ({
-        billableService: item.uuid,
-        quantity: data.quantity || 1,
-        priceUuid: item.servicePrices[0]?.uuid,
-      }));
-
     try {
       if (isSubmitting) {
         return;
       }
+
+      const selectedServices = lineItems.filter((item) => data.services.includes(item.uuid));
+      const billableItems = selectedServices.map((item) => {
+        const servicePrice = item.servicePrices?.find((price) => price.paymentMode?.uuid === data.paymentMethod);
+        if (!servicePrice) {
+          throw new Error(`No price is configured for ${item.name} with the selected payment method.`);
+        }
+
+        return {
+          quantity: 1,
+          priceUuid: servicePrice.uuid
+        };
+      });
+
       const { admissionEncounter, compartment } = await admitBody(patientUuid, data);
 
       if (admissionEncounter && compartment) {
@@ -208,18 +215,35 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
         });
       }
 
-      const billPayload = {
-        lineItems: billableItems,
-        cashPoint: cashPointUuid,
-        patient: patientUuid,
-        status: 'PENDING',
-        payments: [],
-      };
+      const visitUuid = admissionEncounter?.data?.visit?.uuid;
+      if (!visitUuid) {
+        throw new Error(
+          t('admissionVisitMissing', 'The admission visit could not be identified, so the bill was not created.'),
+        );
+      }
 
-      await createPatientBill(billPayload);
+      const pendingBills = await getPendingVisitBills(visitUuid);
+      const pendingBill = pendingBills[0];
+      if (pendingBill) {
+        await Promise.all(billableItems.map((lineItem) => createBillLineItem(pendingBill.uuid, lineItem)));
+      } else {
+        const billPayload = {
+          lineItems: billableItems,
+          cashPoint: cashPointUuid,
+          patient: patientUuid,
+          status: 'PENDING',
+          payments: [],
+          visit: visitUuid,
+        };
+        await createPatientBill(billPayload);
+      }
       showSnackbar({
-        title: t('admissionBillSuccess', 'Bill creation'),
-        subtitle: t('admissionBillSuccessMessage', "Patient's bill has been created successfully"),
+        title: pendingBill
+          ? t('admissionBillUpdated', 'Bill updated')
+          : t('admissionBillSuccess', 'Bill created'),
+        subtitle: pendingBill
+          ? t('admissionBillUpdatedMessage', "Patient's pending bill has been updated successfully")
+          : t('admissionBillSuccessMessage', "Patient's bill has been created successfully"),
         kind: 'success',
       });
       closeWorkspace();

@@ -394,3 +394,18 @@ export const createPatientBill = (payload) => {
   const postUrl = `${restBaseUrl}/billing/bill`;
   return openmrsFetch(postUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload });
 };
+
+export const getPendingVisitBills = async (visitUuid: string) => {
+  const url = `${restBaseUrl}/billing/bill?visitUuid=${visitUuid}&status=PENDING&v=custom:(uuid,lineItems)`;
+  const response = await openmrsFetch<{ results: Array<{ uuid: string }> }>(url);
+  return response.data.results ?? [];
+};
+
+export const createBillLineItem = (billUuid: string, payload) => {
+  const postUrl = `${restBaseUrl}/billing/bill/${billUuid}/lineItem`;
+  return openmrsFetch(postUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: payload,
+  });
+};
