@@ -28,7 +28,8 @@ import {
   usePatient,
   restBaseUrl,
   fhirBaseUrl,
-  setCurrentVisit, // Add this import
+  setCurrentVisit,
+  useSession, // Add this import
 } from '@openmrs/esm-framework';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -68,7 +69,8 @@ const DischargeForm: React.FC<DischargeFormProps> = ({
 
   const { activeVisit, currentVisitIsRetrospective } = useVisit(patientUuid);
   const { queueEntry } = useVisitQueueEntry(patientUuid, activeVisit?.uuid);
-  const { dischargeBody } = useMortuaryOperation(directDischarge ? mortuaryLocation?.ward?.uuid : "");
+  const { sessionLocation } = useSession();
+  const { dischargeBody } = useMortuaryOperation(directDischarge ? sessionLocation?.uuid : "");
   const { patient } = usePatient(patientUuid);
 
   const {
