@@ -159,7 +159,7 @@ export const useMortuaryOperation = (location?: string) => {
           patient: patientUuid,
           startDatetime: dayjs(formData.dateOfAdmission).toISOString(),
           visitType: formData.visitType,
-          location: location,
+          location,
           ...(visitAttributes.length > 0 && { attributes: visitAttributes }),
         },
         patient: patientUuid,

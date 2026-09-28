@@ -77,11 +77,10 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
   const [selectedStorageUnitUuid, setSelectedStorageUnitUuid] = useState('');
   const { time: defaultTime, period: defaultPeriod } = getCurrentTime();
   const config = useConfig<ConfigObject>();
-
   const { data: visitTypes, isLoading: isLoadingVisitTypes } = useVisitType();
   const { lineItems, isLoading: isLoadingLineItems } = useBillableItems();
-  const { admitBody } = useMortuaryOperation(mortuaryLocation?.ward?.uuid);
   const { currentProvider, sessionLocation } = useSession();
+  const { admitBody } = useMortuaryOperation(sessionLocation?.uuid);
   const {
     storageUnits,
     isLoading: isLoadingStorageUnits,
