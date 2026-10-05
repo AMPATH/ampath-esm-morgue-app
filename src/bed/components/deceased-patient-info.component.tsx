@@ -24,6 +24,13 @@ const DeceasedPatientInfo: React.FC<PatientInfoProps> = ({ patient }) => {
         <span className={styles.ageUnit}>{t('yearsOld', 'Yrs old')}</span>
       </div>
 
+      {patient.isDischarged && patient.identifiers && patient.identifiers !== '-' && (
+        <div className={styles.patientInfoRow}>
+          <span className={styles.causeLabel}>{t('identifiers', 'Identifiers')}</span>
+          <span className={styles.causeValue}>{patient.identifiers}</span>
+        </div>
+      )}
+
       <div className={styles.causeOfDeathRow}>
         <span className={styles.causeLabel}>{t('causeOfDeath', 'Cause of death')}</span>
         <span className={styles.causeValue}>{startCase(patient.person.causeOfDeath?.display || '')}</span>
@@ -33,6 +40,19 @@ const DeceasedPatientInfo: React.FC<PatientInfoProps> = ({ patient }) => {
         <span className={styles.causeLabel}>{t('dateOfDeath', 'Date of death')}</span>
         <span className={styles.causeValue}>{formatDateTime(patient.person.deathDate)}</span>
       </div>
+
+      {patient.isDischarged && patient.dischargeType && (
+        <div className={styles.patientInfoRow}>
+          <span className={styles.causeLabel}>{t('dischargeType', 'Discharge type')}</span>
+          <span className={styles.causeValue}>
+            {patient.dischargeType === 'transfer'
+              ? t('transfer', 'Transfer')
+              : patient.dischargeType === 'dispose'
+                ? t('dispose', 'Dispose')
+                : t('discharge', 'Discharge')}
+          </span>
+        </div>
+      )}
 
       {patient.visitInfo?.admissionDate && (
         <div className={styles.patientInfoRow}>

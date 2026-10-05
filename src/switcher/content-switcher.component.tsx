@@ -24,11 +24,12 @@ import AwaitingBedLineListView from '../bed-linelist-view/awaiting/awaiting-bed-
 import AdmittedBedLineListView from '../bed-linelist-view/admitted/admitted-bed-linelist-view.component';
 import DischargedBedLayout from '../bed-layout/discharged/discharged-bed-layout.component';
 import DischargedBedLineListView from '../bed-linelist-view/discharged/discharged-bed-line-view.component';
-import { closeWorkspace, ExtensionSlot, FetchResponse, launchWorkspace, launchWorkspace2, openmrsFetch, restBaseUrl, showSnackbar, usePatient } from '@openmrs/esm-framework';
+import { closeWorkspace, ExtensionSlot, FetchResponse, launchWorkspace2, openmrsFetch, restBaseUrl, showSnackbar, usePatient } from '@openmrs/esm-framework';
 import { Add } from '@carbon/react/icons';
 import usePatientSearchVisibility from '../hooks/usePatientSearchVisibility';
 import WaitingToBeReceivedLineListView from '../bed-linelist-view/waiting/waiting-to-be-received-linelist-view.component';
 import { StorageAssignment } from '../morgue-management/types';
+import { type MortuaryDischargeEncounter } from '../bed-layout/discharged/discharged-bed-layout.resource';
 
 enum ViewType {
   LIST = 0,
@@ -52,7 +53,7 @@ interface CustomContentSwitcherProps {
   awaitingAdmission: Array<MortuaryPatient>;
   waitingToBeReceived: Array<MortuaryPatient>;
   admitted: Array<StorageAssignment>;
-  discharged: Array<StorageAssignment>;
+  discharged: Array<MortuaryDischargeEncounter>;
   isLoading: boolean;
   mutate: () => void;
 }
@@ -102,8 +103,7 @@ const CustomContentSwitcher: React.FC<CustomContentSwitcherProps> = ({
   const openAdmitWorkspace = (patientData: MortuaryPatient) => {
     patientData.patient = patientData.person as Patient;
 
-    launchWorkspace("admit-deceased-person-form", {
-      workspaceTitle: t('admissionForm', 'Admission form'),
+    launchWorkspace2("admit-deceased-person-form", {
       patientData: patientData,
       selectedPatientUuid: patientData.patient.uuid,
       // mortuaryLocation: admissionLocation,
@@ -253,12 +253,11 @@ const CustomContentSwitcher: React.FC<CustomContentSwitcherProps> = ({
             if (patientData.person.dead) {
               openAdmitWorkspace(patientData);
             } else {
-              launchWorkspace("mark-person-deceased-form", {
-                workspaceTitle: t('markDeceased', 'Mark patient deceased'),
+              launchWorkspace2("mark-person-deceased-form", {
                 patientData: patientData,
                 patientUuid: selectedPatientUuid,
                 mutated: mutate,
-                closeWorkspace: () => { openAdmitWorkspace(patientData) }
+                onMarkComplete: () => { openAdmitWorkspace(patientData) }
               });
             }
 

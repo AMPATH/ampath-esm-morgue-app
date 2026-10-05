@@ -87,54 +87,12 @@
       "order": 2
     }
   ],
-  "workspaces": [
-    {
-      "name": "patient-additional-info-form",
-      "component": "patientAdditionalInfoForm",
-      "title": "add more details",
-      "type": "other-form"
-    },
-    {
-      "name": "discharge-body-form",
-      "component": "dischargeBodyForm",
-      "title": "discharge body form",
-      "type": "other-form"
-    },
-    {
-      "name": "admit-body-form",
-      "component": "admitBodyForm",
-      "title": "Admission form",
-      "type": "other-form"
-    },
-    {
-      "name": "swap-unit-form",
-      "component": "swapForm",
-      "title": "Swap form",
-      "type": "other-form"
-    },
-    {
-      "name": "admit-deceased-person-form",
-      "component": "admitDeceasedPersonForm",
-      "title": "Admit Deceased Person",
-      "type": "other-form"
-    },
-    {
-      "name": "mark-person-deceased-form",
-      "component": "markPersonDeceasedForm",
-      "title": "Mark patient as Deceased",
-      "type": "other-form"
-    },
-    {
-      "name": "mortuary-form-entry",
-      "component": "mortuaryFormEntry",
-      "title": "Mortuary Form Entry",
-      "type": "form",
-      "width": "extra-wide",
-      "canMaximize": true,
-      "canHide": true
-    }
-  ],
   "workspaceGroups2": [
+    {
+      "name": "morgue-operations-workspace-group",
+      "persistence": "closable",
+      "scopePattern": "^/home/morgue"
+    },
     {
       "name": "morgue-management-workspace-group",
       "persistence": "closable",
@@ -143,12 +101,47 @@
   ],
   "workspaceWindows2": [
     {
+      "name": "morgue-operations-workspace-window",
+      "group": "morgue-operations-workspace-group",
+      "width": "narrow"
+    },
+    {
+      "name": "morgue-form-entry-workspace-window",
+      "group": "morgue-operations-workspace-group",
+      "width": "extra-wide"
+    },
+    {
       "name": "morgue-management-workspace-window",
       "group": "morgue-management-workspace-group",
       "width": "narrow"
     }
   ],
   "workspaces2": [
+    {
+      "name": "discharge-body-form",
+      "component": "dischargeBodyForm",
+      "window": "morgue-operations-workspace-window"
+    },
+    {
+      "name": "swap-unit-form",
+      "component": "swapForm",
+      "window": "morgue-operations-workspace-window"
+    },
+    {
+      "name": "admit-deceased-person-form",
+      "component": "admitDeceasedPersonForm",
+      "window": "morgue-operations-workspace-window"
+    },
+    {
+      "name": "mark-person-deceased-form",
+      "component": "markPersonDeceasedForm",
+      "window": "morgue-operations-workspace-window"
+    },
+    {
+      "name": "mortuary-form-entry",
+      "component": "mortuaryFormEntry",
+      "window": "morgue-form-entry-workspace-window"
+    },
     {
       "name": "storage-unit-form",
       "component": "storageUnitForm",

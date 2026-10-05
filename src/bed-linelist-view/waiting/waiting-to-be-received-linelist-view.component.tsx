@@ -16,9 +16,9 @@ import {
     Search
 } from '@carbon/react';
 import styles from '../bed-linelist-view.scss';
-import { formatDateTime } from '../../utils/utils';
+import { convertDateToDays, formatDateTime } from '../../utils/utils';
 import { type MortuaryLocationResponse, type MortuaryPatient } from '../../types';
-import { launchWorkspace, useLayoutType } from '@openmrs/esm-framework';
+import { launchWorkspace, launchWorkspace2, useLayoutType } from '@openmrs/esm-framework';
 import { useAwaitingPatients } from '../../home/home.resource';
 import EmptyMorgueAdmission from '../../empty-state/empty-morgue-admission.component';
 
@@ -52,23 +52,31 @@ const WaitingToBeReceivedLineListView: React.FC<WaitingToBeReceivedLineListViewP
     const [searchTerm, setSearchTerm] = useState('');
 
     const headers = [
-        { key: 'admissionDate', header: t('dateQueued', 'Date Queued') },
-        { key: 'idNumber', header: t('idNumber', 'ID Number') },
+        { key: 'deathReportingDate', header: t('deathReportingDate', 'Death reporting date') },
+        { key: 'idNumber', header: t('identifiers', 'Identifiers') },
         { key: 'name', header: t('name', 'Name') },
         { key: 'gender', header: t('gender', 'Gender') },
         { key: 'age', header: t('age', 'Age') },
-        { key: 'daysAdmitted', header: t('durationInQueue', 'Duration in queue') },
+        { key: 'durationInQueue', header: t('durationInQueue', 'Duration in queue') },
         { key: 'action', header: t('action', 'Action') },
     ];
 
-    const calculateDaysInQueue = (dateOfDeath: string): number => {
-        if (!dateOfDeath) {
-            return 0;
+    const calculateDaysInQueue = (reportingDate: string): string => {
+        if (!reportingDate) {
+            return '0';
         }
-        const deathDate = new Date(dateOfDeath);
-        const currentDate = new Date();
-        const timeDiff = currentDate.getTime() - deathDate.getTime();
-        return Math.floor(timeDiff / (1000 * 3600 * 24));
+        const days = convertDateToDays(reportingDate);
+        return `${days} ${(days === 1 ? t('day', 'Day') : t('days', 'Days'))}`
+    };
+
+    const getIdentifiers = (patient: any) => {
+        const identifiers = patient?.identifiers?.filter(id => !id?.display?.toLowerCase()?.includes("universal"))
+            ?.map(id => {
+                const spl = id?.display?.split("=");
+                return spl?.length > 1 ? spl["1"] : "";
+            })
+            ?.join(",");
+        return identifiers ?? "-";
     };
 
     const allRows = useMemo(() => {
@@ -81,25 +89,21 @@ const WaitingToBeReceivedLineListView: React.FC<WaitingToBeReceivedLineListViewP
             const patientName = mortuaryPatient?.person?.display || '-';
             const gender = mortuaryPatient?.person?.gender || '-';
             const age = mortuaryPatient?.person?.age || '-';
-            const dateOfDeath = mortuaryPatient?.person?.deathDate;
-            const daysInQueue = calculateDaysInQueue(dateOfDeath);
-            const idNumber =
-                mortuaryPatient?.person?.identifiers
-                    ?.find((id) => id.display?.includes('OpenMRS ID'))
-                    ?.display?.split('=')?.[1]
-                    ?.trim() || '-';
+            const deathReportingDate = mortuaryPatient?.encounterDatetime;
+            const daysInQueue = calculateDaysInQueue(deathReportingDate);
+            const identifiers = getIdentifiers(mortuaryPatient?.patient);
 
             return {
                 id: patientUuid,
-                admissionDate: formatDateTime(dateOfDeath),
-                idNumber,
+                deathReportingDate: formatDateTime(deathReportingDate),
+                idNumber: identifiers,
                 name: patientName,
                 gender: gender,
                 age: age.toString(),
                 bedNumber: '-',
-                daysAdmitted: daysInQueue.toString(),
+                durationInQueue: daysInQueue.toString(),
                 action: patientUuid,
-                searchableText: `${patientName} ${idNumber} ${gender}`.toLowerCase(),
+                searchableText: `${patientName} ${identifiers} ${gender}`.toLowerCase(),
             };
         });
 
@@ -130,8 +134,7 @@ const WaitingToBeReceivedLineListView: React.FC<WaitingToBeReceivedLineListViewP
     const paginatedRows = paginated ? filteredRows.slice(startIndex, endIndex) : filteredRows;
 
     const handleReceive = (patientData: MortuaryPatient) => {
-        launchWorkspace("mark-person-deceased-form", {
-            workspaceTitle: t('markDeceased', 'Mark patient deceased'),
+        launchWorkspace2("mark-person-deceased-form", {
             patientData: patientData,
             patientUuid: patientData?.patient?.uuid,
             mutated,

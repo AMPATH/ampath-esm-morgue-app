@@ -16,7 +16,7 @@ import {
   DataTableSkeleton,
   Search,
 } from '@carbon/react';
-import { launchWorkspace, navigate, useConfig, useLayoutType, useVisit } from '@openmrs/esm-framework';
+import { launchWorkspace2, navigate, useConfig, useLayoutType, useVisit } from '@openmrs/esm-framework';
 import styles from '../bed-linelist-view.scss';
 import { convertDateToDays, formatDateTime } from '../../utils/utils';
 import { Patient, Person, type MortuaryLocationResponse } from '../../types';
@@ -60,9 +60,8 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
   const [currPageSize, setCurrPageSize] = useState(initialPageSize);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const DaysInMortuary = ({ patientUuid }: { patientUuid: string }) => {
-    const { activeVisit } = useVisit(patientUuid);
-    const days = convertDateToDays(activeVisit?.startDatetime);
+  const daysInMortuary = ({ startDate }: { startDate: string }) => {
+    const days = convertDateToDays(startDate);
 
     return (
       <>
@@ -71,14 +70,10 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
     );
   };
 
-  const AdmissionDate = ({ patientUuid }: { patientUuid: string }) => {
-    const { activeVisit } = useVisit(patientUuid);
-    return <>{activeVisit?.startDatetime ? formatDateTime(activeVisit.startDatetime) : '-'}</>;
-  };
-
   const headers = [
     { key: 'admissionDate', header: t('admissionDate', 'Admission Date') },
-    { key: 'idNumber', header: t('idNumber', 'ID Number') },
+    { key: 'dateOfDeath', header: t('dateOfDeath', 'Date of death') },
+    { key: 'idNumber', header: t('identifiers', 'Identifiers') },
     { key: 'patientName', header: t('patientName', 'Patient Name') },
     { key: 'gender', header: t('gender', 'Gender') },
     { key: 'age', header: t('age', 'Age') },
@@ -90,12 +85,10 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
   ];
 
   const handlePostmortem = (patientUuid: string, bedInfo?: { bedNumber: string; bedId: number }) => {
-    const hasBedInfo = bedInfo?.bedNumber && bedInfo?.bedId;
-
     if (onPostmortem) {
       onPostmortem(patientUuid);
     } else {
-      launchWorkspace('mortuary-form-entry', {
+      launchWorkspace2('mortuary-form-entry', {
         formUuid: autopsyFormUuid,
         workspaceTitle: t('postmortemForm', 'Postmortem form'),
         patientUuid: patientUuid,
@@ -117,8 +110,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
     if (onDischarge) {
       onDischarge(patientUuid, storageAssignmentUuid);
     } else {
-      launchWorkspace('discharge-body-form', {
-        workspaceTitle: t('dischargeForm', 'Discharge form'),
+      launchWorkspace2('discharge-body-form', {
         patientUuid: patientUuid,
         storageAssignmentUuid,
         mutate,
@@ -130,8 +122,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
     if (onSwapCompartment) {
       onSwapCompartment(patientUuid, bedId.toString());
     } else {
-      launchWorkspace('swap-unit-form', {
-        workspaceTitle: t('swapCompartment', 'Swap compartment'),
+      launchWorkspace2('swap-unit-form', {
         patientUuid: patientUuid,
         bedId,
         // mortuaryLocation: AdmittedDeceasedPatient,
@@ -140,38 +131,20 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
     }
   };
 
-  const calculateDaysAdmitted = (dateOfDeath: string): number => {
-    if (!dateOfDeath) {
-      return 0;
-    }
-    const deathDate = new Date(dateOfDeath);
-    const currentDate = new Date();
-    const timeDiff = currentDate.getTime() - deathDate.getTime();
-    return Math.floor(timeDiff / (1000 * 3600 * 24));
-  };
-
-  const getCompartmentShare = useMemo(() => {
-    return (patients: any[]) => {
-      if (!patients || patients.length === 0) {
-        return t('empty', 'Empty');
-      }
-      return patients.length > 1
-        ? t('sharedCompartment', '{{count}} sharing', { count: patients.length })
-        : t('singleOccupancy', 'Single');
-    };
-  }, [t]);
-
   const getIdNumber = (patient: any) => {
-    return "-";
+    const identifiers = patient?.identifiers?.filter(id => !id?.identifierType?.display?.toLowerCase()?.includes("universal"))
+      ?.map(id => id?.identifier)
+      ?.join(",");
+    return identifiers ?? "-";
   };
 
-  const getPatientName = (patient: Patient) => {
+  const getPatientName = (patient: any) => {
     if (!patient) {
       return '-';
     }
 
-    if (patient.display) {
-      return patient.display;
+    if (patient && patient?.person) {
+      return patient?.person?.display;
     }
 
     return '-';
@@ -191,12 +164,13 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
         const compartment = adm?.compartment;
         const patient = adm?.patient;
         const patientUuid = patient?.uuid;
-        const patientName = patient?.display;
+        const patientName = getPatientName(patient);
         const gender = patient?.person?.gender || '-';
         const age = patient?.person?.age?.toString() || '-';
         const causeOfDeath = patient?.person?.causeOfDeath?.display || t('unknown', 'Unknown');
         const dateOfDeath = patient?.person?.deathDate;
-        const daysAdmitted = calculateDaysAdmitted(dateOfDeath).toString();
+        const dateOfAdmission = adm?.dateAdmitted;
+        const daysAdmitted = daysInMortuary({ startDate: dateOfAdmission }); //calculateDaysAdmitted(dateOfAdmission).toString();
         const idNumber = getIdNumber(patient);
 
         rows.push({
@@ -208,6 +182,7 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
           gender,
           age,
           dateOfDeath: formatDateTime(dateOfDeath),
+          admissionDate: formatDateTime(dateOfAdmission),
           causeOfDeath,
           daysAdmitted,
           isEmpty: false,
@@ -327,21 +302,21 @@ const AdmittedBedLineListView: React.FC<AdmittedBedLineListViewProps> = ({
                           {row.cells.map((cell) => {
                             const cellKey = cell.info.header as keyof typeof rowData;
 
-                            if (cell.info.header === 'daysAdmitted' && !rowData.isEmpty) {
-                              return (
-                                <TableCell key={cell.id}>
-                                  <DaysInMortuary patientUuid={rowData.patientUuid} />
-                                </TableCell>
-                              );
-                            }
+                            // if (cell.info.header === 'daysAdmitted' && !rowData.isEmpty) {
+                            //   return (
+                            //     <TableCell key={cell.id}>
+                            //       <DaysInMortuary patientUuid={rowData.patientUuid} />
+                            //     </TableCell>
+                            //   );
+                            // }
 
-                            if (cell.info.header === 'admissionDate' && !rowData.isEmpty) {
-                              return (
-                                <TableCell key={cell.id}>
-                                  <AdmissionDate patientUuid={rowData.patientUuid} />
-                                </TableCell>
-                              );
-                            }
+                            // if (cell.info.header === 'admissionDate' && !rowData.isEmpty) {
+                            //   return (
+                            //     <TableCell key={cell.id}>
+                            //       <AdmissionDate patientUuid={rowData.patientUuid} />
+                            //     </TableCell>
+                            //   );
+                            // }
 
                             if (cell.info.header === 'status') {
                               return (

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InlineLoading, Search } from '@carbon/react';
-import { launchWorkspace, navigate, useConfig, useLayoutType } from '@openmrs/esm-framework';
+import { launchWorkspace2, navigate, useConfig, useLayoutType } from '@openmrs/esm-framework';
 import styles from '../bed-layout.scss';
 import BedCard from '../../bed/bed.component';
 import { type MortuaryLocationResponse, type Patient } from '../../types';
@@ -48,7 +48,7 @@ const BedLayout: React.FC<BedLayoutProps> = ({
     if (onPostmortem) {
       onPostmortem(patientUuid);
     } else {
-      launchWorkspace('mortuary-form-entry', {
+      launchWorkspace2('mortuary-form-entry', {
         formUuid: autopsyFormUuid,
         workspaceTitle: t('postmortemForm', 'Postmortem form'),
         patientUuid: patientUuid,
@@ -71,8 +71,7 @@ const BedLayout: React.FC<BedLayoutProps> = ({
     if (onDischarge) {
       onDischarge(patientUuid);
     } else {
-      launchWorkspace('discharge-body-form', {
-        workspaceTitle: t('dischargeForm', 'Discharge form'),
+      launchWorkspace2('discharge-body-form', {
         patientUuid: patientUuid,
         compartmentUuid,
         storageAssignmentUuid,
@@ -85,8 +84,7 @@ const BedLayout: React.FC<BedLayoutProps> = ({
     if (onSwapCompartment) {
       onSwapCompartment(patientUuid, compartmentUuid?.toString() || '');
     } else {
-      launchWorkspace('swap-unit-form', {
-        workspaceTitle: t('swapCompartment', 'Swap compartment'),
+      launchWorkspace2('swap-unit-form', {
         patientUuid: patientUuid,
         compartmentUuid,
         // mortuaryLocation: AdmittedDeceasedPatient,

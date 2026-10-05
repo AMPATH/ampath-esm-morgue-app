@@ -1,21 +1,27 @@
 import { InlineLoading } from '@carbon/react';
-import { DefaultWorkspaceProps, ExtensionSlot, useConnectivity, usePatient } from '@openmrs/esm-framework';
+import { ExtensionSlot, useConnectivity, usePatient, Workspace2 } from '@openmrs/esm-framework';
 import React, { useMemo } from 'react';
 
-type FormEntryWorkspaceProps = DefaultWorkspaceProps & {
-  formUuid?: string;
-  patientUuid?: string;
-  encounterUuid?: string;
-  mutateForm: () => void;
-};
+interface FormEntryWorkspaceProps {
+  closeWorkspace: (options?: { discardUnsavedChanges?: boolean }) => Promise<boolean>;
+  workspaceProps: {
+    formUuid?: string;
+    patientUuid?: string;
+    encounterUuid?: string;
+    mutateForm?: () => void;
+    workspaceTitle?: string;
+    [key: string]: unknown;
+  } | null;
+}
 
 const FormEntryWorkspace: React.FC<FormEntryWorkspaceProps> = (props) => {
-  const { formUuid, patientUuid, encounterUuid, mutateForm, closeWorkspace, closeWorkspaceWithSavedChanges } = props;
+  const { closeWorkspace, workspaceProps } = props;
+  const { formUuid, patientUuid, encounterUuid, mutateForm, workspaceTitle } = workspaceProps ?? {};
   const { patient, isLoading } = usePatient(patientUuid);
   const isOnline = useConnectivity();
   const state = useMemo(
     () => ({
-      ...props,
+      ...workspaceProps,
       view: 'form',
       formUuid: formUuid ?? null,
       visitUuid: '',
@@ -32,7 +38,7 @@ const FormEntryWorkspace: React.FC<FormEntryWorkspaceProps> = (props) => {
       },
       closeWorkspaceWithSavedChanges: () => {
         typeof mutateForm === 'function' && mutateForm();
-        closeWorkspaceWithSavedChanges();
+        closeWorkspace({ discardUnsavedChanges: true });
       },
     }),
     [
@@ -41,22 +47,23 @@ const FormEntryWorkspace: React.FC<FormEntryWorkspaceProps> = (props) => {
       encounterUuid,
       formUuid,
       isOnline,
-      props,
+      workspaceProps,
       closeWorkspace,
-      closeWorkspaceWithSavedChanges,
       mutateForm,
     ],
   );
 
-  if (isLoading) {
-    return (
-      <div>
-        <InlineLoading status="active" iconDescription="Loading" description="Loading form..." />
-      </div>
-    );
-  }
-
-  return <ExtensionSlot name="form-widget-slot" state={state} />;
+  return (
+    <Workspace2 title={workspaceTitle ?? 'Mortuary form entry'}>
+      {isLoading ? (
+        <div>
+          <InlineLoading status="active" iconDescription="Loading" description="Loading form..." />
+        </div>
+      ) : (
+        <ExtensionSlot name="form-widget-slot" state={state} />
+      )}
+    </Workspace2>
+  );
 };
 
 export default FormEntryWorkspace;

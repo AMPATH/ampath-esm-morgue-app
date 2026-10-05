@@ -1,70 +1,143 @@
-import { useMemo, useState } from 'react';
-import { usePaginationInfo } from '@openmrs/esm-patient-common-lib';
-import { type FetchResponse, openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
+import { useMemo } from 'react';
+import { type FetchResponse, fhirBaseUrl, openmrsFetch, restBaseUrl, useConfig, useSession } from '@openmrs/esm-framework';
 import useSWR from 'swr';
-import { mutate as mutateSWR } from 'swr';
 import { type Patient } from '../../types';
-import { type MortuaryLocationResponse } from '../../types';
-import { useStorageAssignments } from '../../morgue-management/morgue-management.resource';
-import { StorageAssignment } from '../../morgue-management/types';
+import { type ConfigObject } from '../../config-schema';
 
-export const useMortuaryDischargeEncounter = (
-  _dischargeEncounterTypeUuid: string,
-  assignments: StorageAssignment[],
-) => {
-  const [currPageSize, setCurrPageSize] = useState(100);
-  const [currentPage, setCurrentPage] = useState(1);
+export interface MortuaryDischargeEncounter {
+  uuid: string;
+  patient: { uuid: string; display: string };
+  encounterDateTime: string;
+  dischargeType: 'discharge' | 'transfer' | 'dispose';
+}
 
-  const currentPageSize = currPageSize;
-  const totalCount = assignments.length;
-  const currentItems = Math.max(0, Math.min(currPageSize, totalCount - (currentPage - 1) * currPageSize));
-  const { pageSizes, itemsDisplayed } = usePaginationInfo(currPageSize, totalCount, currentPage, currentItems);
-  const pageAssignments = useMemo(
-    () => assignments.slice((currentPage - 1) * currPageSize, currentPage * currPageSize),
-    [assignments, currentPage, currPageSize],
-  );
+interface FhirCoding {
+  code?: string;
+}
 
-  const dischargedPatientUuids = useMemo(
-    () => [...new Set(assignments.map((assignment) => assignment.patient.uuid))],
-    [assignments],
-  );
+interface FhirCodeableConcept {
+  coding?: FhirCoding[];
+}
 
-  const encounters = useMemo(
-    () => assignments.map((assignment) => ({
-      uuid: assignment.uuid,
-      patient: { uuid: assignment.patient.uuid, name: assignment.patient.display },
-      encounterDateTime: assignment.dateDischarged ?? undefined,
-      compartment: assignment.compartment,
-    })),
-    [assignments],
-  );
+interface FhirEncounterResource {
+  resourceType: 'Encounter';
+  id: string;
+  date?: string;
+  period?: { start?: string };
+  subject?: { reference?: string; display?: string };
+  type?: FhirCodeableConcept[];
+  location?: Array<{ location?: { reference?: string } }>;
+}
 
-  const paginated = totalCount > currPageSize;
-  const goTo = (page: number) => setCurrentPage(Math.max(1, Math.min(page, Math.ceil(totalCount / currPageSize) || 1)));
-  const mutateAssignments = () =>
-    mutateSWR(
-      (key) => typeof key === 'string' && key.includes('/morgue/storage-assignment'),
-      undefined,
-      { revalidate: true },
+interface FhirObservationResource {
+  resourceType: 'Observation';
+  encounter?: { reference?: string };
+  code?: FhirCodeableConcept;
+}
+
+interface FhirBundle {
+  entry?: Array<{ resource?: FhirEncounterResource | FhirObservationResource }>;
+}
+
+const getReferenceId = (reference?: string) => reference?.split('/').pop();
+
+export const useMortuaryDischargeEncounter = () => {
+  const {
+    morgueDischargeEncounterTypeUuid,
+    serialNumberUuid,
+    courtOrderCaseNumberUuid,
+    receivingAreaUuid,
+    reasonForTransferUuid,
+  } = useConfig<ConfigObject>();
+  const { sessionLocation } = useSession();
+  const locationUuid = sessionLocation?.uuid;
+  const url = useMemo(() => {
+    if (!morgueDischargeEncounterTypeUuid || !locationUuid) {
+      return null;
+    }
+
+    const params = new URLSearchParams({
+      type: morgueDischargeEncounterTypeUuid,
+      location: locationUuid,
+      _count: '100',
+      _getpagesoffset: '0',
+      _revinclude: 'Observation:encounter',
+      _sort: '-date',
+    });
+    return `${fhirBaseUrl}/Encounter?${params.toString()}`;
+  }, [morgueDischargeEncounterTypeUuid, locationUuid]);
+  const { data, error, isLoading, mutate } = useSWR<FetchResponse<FhirBundle>>(url, openmrsFetch);
+  const encounters = useMemo(() => {
+    const entries = data?.data?.entry ?? [];
+    const observationsByEncounter = new Map<string, FhirObservationResource[]>();
+    for (const { resource } of entries) {
+      if (resource?.resourceType !== 'Observation') {
+        continue;
+      }
+      const encounterId = getReferenceId(resource.encounter?.reference);
+      if (!encounterId) {
+        continue;
+      }
+      observationsByEncounter.set(encounterId, [...(observationsByEncounter.get(encounterId) ?? []), resource]);
+    }
+
+    const latestEncounterByPatient = new Map<string, MortuaryDischargeEncounter>();
+    for (const { resource } of entries) {
+      if (resource?.resourceType !== 'Encounter') {
+        continue;
+      }
+
+      const patientUuid = getReferenceId(resource.subject?.reference);
+      const encounterDateTime = resource.date ?? resource.period?.start;
+      if (!patientUuid || !encounterDateTime) {
+        continue;
+      }
+
+      const existingEncounter = latestEncounterByPatient.get(patientUuid);
+      if (
+        !existingEncounter ||
+        new Date(encounterDateTime).getTime() > new Date(existingEncounter.encounterDateTime).getTime()
+      ) {
+        const observationConcepts = new Set(
+          (observationsByEncounter.get(resource.id) ?? []).flatMap(
+            (observation) => observation.code?.coding?.map((coding) => coding.code).filter(Boolean) ?? [],
+          ),
+        );
+        const dischargeType =
+          observationConcepts.has(serialNumberUuid) || observationConcepts.has(courtOrderCaseNumberUuid)
+            ? 'dispose'
+            : observationConcepts.has(receivingAreaUuid) || observationConcepts.has(reasonForTransferUuid)
+              ? 'transfer'
+              : 'discharge';
+        latestEncounterByPatient.set(patientUuid, {
+          uuid: resource.id,
+          patient: { uuid: patientUuid, display: resource.subject?.display ?? patientUuid },
+          encounterDateTime,
+          dischargeType,
+        });
+      }
+    }
+    return [...latestEncounterByPatient.values()].sort(
+      (left, right) => new Date(right.encounterDateTime).getTime() - new Date(left.encounterDateTime).getTime(),
     );
+  }, [
+    data,
+    serialNumberUuid,
+    courtOrderCaseNumberUuid,
+    receivingAreaUuid,
+    reasonForTransferUuid,
+  ]);
+  const dischargedPatientUuids = useMemo(
+    () => [...new Set(encounters.map((encounter) => encounter.patient.uuid))],
+    [encounters],
+  );
 
   return {
-    assignments: pageAssignments,
     encounters,
     dischargedPatientUuids,
-    paginated,
-    currentPage,
-    pageSizes,
-    itemsDisplayed,
-    goTo,
-    currPageSize,
-    setCurrPageSize: (pageSize: number) => {
-      setCurrPageSize(pageSize);
-      setCurrentPage(1);
-    },
-    totalCount,
-    currentPageSize,
-    mutate: mutateAssignments,
+    isLoading,
+    error,
+    mutate,
   };
 };
 

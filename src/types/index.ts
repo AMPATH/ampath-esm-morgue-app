@@ -69,6 +69,7 @@ export interface Patient {
 }
 
 export interface MortuaryPatient {
+  encounterDatetime: string;
   patient: Patient;
   person: Person;
   personName: PersonName;
@@ -643,6 +644,8 @@ export interface EnhancedPatient {
   };
   isDischarged?: boolean;
   encounterDate?: string;
+  dischargeType?: 'discharge' | 'transfer' | 'dispose';
+  identifiers?: string;
   originalMortuaryPatient?: MortuaryPatient;
   originalPatient?: Patient;
 }

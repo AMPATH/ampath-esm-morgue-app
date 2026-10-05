@@ -17,19 +17,18 @@ import {
   DataTableSkeleton,
   Search,
 } from '@carbon/react';
-import { ExtensionSlot, PrinterIcon, showModal, useConfig, useLayoutType } from '@openmrs/esm-framework';
+import { ExtensionSlot, PrinterIcon, showModal, useLayoutType } from '@openmrs/esm-framework';
 import styles from '../bed-linelist-view.scss';
 import { formatDateTime } from '../../utils/utils';
 import { type Patient, type MortuaryLocationResponse } from '../../types';
-import { ConfigObject } from '../../config-schema';
-import usePatients, { useMortuaryDischargeEncounter } from '../../bed-layout/discharged/discharged-bed-layout.resource';
+import usePatients, { type MortuaryDischargeEncounter } from '../../bed-layout/discharged/discharged-bed-layout.resource';
 import { EmptyState } from '@openmrs/esm-patient-common-lib';
 import EmptyMorgueAdmission from '../../empty-state/empty-morgue-admission.component';
 import { Printer } from '@carbon/react/icons';
-import { StorageAssignment } from '../../morgue-management/types';
+import { getIdentifiers } from '../../helpers/expression-helper';
 
 interface DischargedBedLineListViewProps {
-  discharged: StorageAssignment[];
+  discharged: MortuaryDischargeEncounter[];
   isLoading: boolean;
   paginated?: boolean;
   initialPageSize?: number;
@@ -48,7 +47,6 @@ const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
   mutate,
 }) => {
   const { t } = useTranslation();
-  const { morgueDischargeEncounterTypeUuid } = useConfig<ConfigObject>();
   const isTablet = useLayoutType() === 'tablet';
   const controlSize = isTablet ? 'md' : 'sm';
 
@@ -57,23 +55,19 @@ const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
 
   const {
-    dischargedPatientUuids,
-    encounters,
-  } = useMortuaryDischargeEncounter(morgueDischargeEncounterTypeUuid, discharged);
-
-  const {
     patients: dischargedPatients,
-  } = usePatients(dischargedPatientUuids || []);
+  } = usePatients([...new Set(discharged.map((encounter) => encounter.patient.uuid))]);
 
   const headers = [
     { key: 'name', header: t('name', 'Name') },
-    { key: 'idNumber', header: t('idNumber', 'ID Number') },
+    { key: 'identifiers', header: t('identifiers', 'Identifiers') },
     { key: 'gender', header: t('gender', 'Gender') },
     { key: 'age', header: t('age', 'Age') },
     { key: 'causeOfDeath', header: t('causeOfDeath', 'Cause of Death') },
     { key: 'dateOfDeath', header: t('dateOfDeath', 'Date of Death') },
     { key: 'daysSinceDeath', header: t('daysSinceDeath', 'Days Since Death') },
     { key: 'dischargeDate', header: t('dischargeDate', 'Discharge Date') },
+    { key: 'dischargeType', header: t('dischargeType', 'Discharge type') },
     { key: 'action', header: t('action', 'Action') },
   ];
 
@@ -86,18 +80,6 @@ const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
     const timeDiff = currentDate.getTime() - deathDate.getTime();
     return Math.floor(timeDiff / (1000 * 3600 * 24));
   }, []);
-
-  const getEncounterDateForPatient = useCallback(
-    (patientUuid: string): string | null => {
-      if (!encounters || encounters.length === 0) {
-        return null;
-      }
-
-      const patientEncounter = encounters.find((encounter) => encounter.patient?.uuid === patientUuid);
-      return patientEncounter?.encounterDateTime || null;
-    },
-    [encounters],
-  );
 
   const handlePrintGatePass = useCallback(
     (patient: Patient, encounterDate?: string) => {
@@ -127,18 +109,16 @@ const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
       const causeOfDeath = patient?.person?.causeOfDeath?.display || '-';
       const dateOfDeath = patient?.person?.deathDate;
       const daysSinceDeath = calculateDaysSinceDeath(dateOfDeath);
-      const encounterDate = getEncounterDateForPatient(patientUuid);
-      const idNumber =
-        patient?.identifiers
-          ?.find((id) => id.display?.includes('OpenMRS ID'))
-          ?.display?.split('=')?.[1]
-          ?.trim() || '-';
+      const dischargeEncounter = discharged.find((encounter) => encounter.patient.uuid === patientUuid);
+      const encounterDate = dischargeEncounter?.encounterDateTime ?? null;
+      const dischargeType = dischargeEncounter?.dischargeType;
+      const identifiers = getIdentifiers(patient);
 
       return {
         id: patientUuid,
         patient: patient,
         encounterDate: encounterDate,
-        idNumber,
+        identifiers,
         name: patientName,
         gender: gender,
         age: age.toString(),
@@ -146,13 +126,19 @@ const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
         dateOfDeath: formatDateTime(dateOfDeath),
         daysSinceDeath: daysSinceDeath.toString(),
         dischargeDate: formatDateTime(encounterDate),
+        dischargeType:
+          dischargeType === 'transfer'
+            ? t('transfer', 'Transfer')
+            : dischargeType === 'dispose'
+              ? t('dispose', 'Dispose')
+              : t('discharge', 'Discharge'),
         action: patientUuid,
-        searchableText: `${patientName} ${idNumber} ${gender} ${causeOfDeath}`.toLowerCase(),
+        searchableText: `${patientName} ${identifiers} ${gender} ${causeOfDeath}`.toLowerCase(),
       };
     });
 
     return rows;
-  }, [dischargedPatients, calculateDaysSinceDeath, getEncounterDateForPatient]);
+  }, [dischargedPatients, calculateDaysSinceDeath, discharged, t]);
 
   const filteredRows = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -164,7 +150,7 @@ const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
       (row) =>
         row.searchableText.includes(searchLower) ||
         row.name.toLowerCase().includes(searchLower) ||
-        row.idNumber.toLowerCase().includes(searchLower) ||
+        row.identifiers.toLowerCase().includes(searchLower) ||
         row.gender.toLowerCase().includes(searchLower) ||
         row.causeOfDeath.toLowerCase().includes(searchLower),
     );
@@ -287,7 +273,7 @@ const DischargedBedLineListView: React.FC<DischargedBedLineListViewProps> = ({
                                 <div className={styles.actionButtons}>
                                   <OverflowMenu renderIcon={Printer} flipped>
                                     <OverflowMenuItem
-                                      onClick={() => handlePrintGatePass(patientData, encounterDate)}
+                                      onClick={() => patientData && handlePrintGatePass(patientData, encounterDate ?? undefined)}
                                       itemText={t('printGatePass', 'Gate Pass')}
                                       disabled={!patientData}
                                     />

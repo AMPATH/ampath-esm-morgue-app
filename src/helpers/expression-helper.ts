@@ -1,5 +1,16 @@
 import { EnhancedPatient, MortuaryPatient, Patient } from '../types';
 
+export const getIdentifiers = (patient: Pick<Patient, 'identifiers'>): string => {
+  const identifiers = patient?.identifiers
+    ?.filter((identifier) => !identifier?.display?.toLowerCase()?.includes('universal'))
+    ?.map((identifier) => {
+      const splitIdentifier = identifier?.display?.split('=');
+      return splitIdentifier?.length > 1 ? splitIdentifier[1] : '';
+    })
+    ?.join(',');
+  return identifiers ?? '-';
+};
+
 /**
  * Converts a string to uppercase.
  * @param {string} str - The string to convert.
@@ -61,7 +72,11 @@ export const transformAdmittedPatient = (
  * @param {string} [encounterDate] - The date of the encounter for the patient's discharge.
  * @return {EnhancedPatient} - The transformed EnhancedPatient with a discharged status.
  */
-export const transformDischargedPatient = (patient: Patient, encounterDate?: string): EnhancedPatient => ({
+export const transformDischargedPatient = (
+  patient: Patient,
+  encounterDate?: string,
+  dischargeType?: EnhancedPatient['dischargeType'],
+): EnhancedPatient => ({
   uuid: patient.uuid,
   person: {
     display: patient.person?.display,
@@ -72,6 +87,8 @@ export const transformDischargedPatient = (patient: Patient, encounterDate?: str
   },
   isDischarged: true,
   encounterDate,
+  dischargeType,
+  identifiers: getIdentifiers(patient),
   originalPatient: patient,
 });
 

@@ -28,6 +28,7 @@ import {
   restBaseUrl,
   ResponsiveWrapper,
   useLayoutType,
+  Workspace2,
 } from '@openmrs/esm-framework';
 import { EmptyDataIllustration } from '@openmrs/esm-patient-common-lib';
 import classNames from 'classnames';
@@ -35,10 +36,12 @@ import { type MortuaryLocationResponse } from '../../types';
 import { useMortuaryOperation } from '../admit-deceased-person-workspace/admit-deceased-person.resource';
 
 interface SwapFormProps {
-  closeWorkspace: () => void;
-  patientUuid: string;
-  mortuaryLocation: MortuaryLocationResponse;
-  mutate?: () => void;
+  closeWorkspace: (options?: { discardUnsavedChanges?: boolean }) => Promise<boolean>;
+  workspaceProps: {
+    patientUuid: string;
+    mortuaryLocation?: MortuaryLocationResponse;
+    mutate?: () => void;
+  } | null;
 }
 
 const schema = z.object({
@@ -53,7 +56,8 @@ const schema = z.object({
     .transform((val) => (typeof val === 'string' ? Number(val) : val)),
 });
 
-const SwapForm: React.FC<SwapFormProps> = ({ closeWorkspace, patientUuid, mortuaryLocation, mutate }) => {
+const SwapForm: React.FC<SwapFormProps> = ({ closeWorkspace, workspaceProps }) => {
+  const { patientUuid, mortuaryLocation, mutate } = workspaceProps ?? ({} as NonNullable<SwapFormProps['workspaceProps']>);
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const { currentVisit } = useVisit(patientUuid);
@@ -149,7 +153,7 @@ const SwapForm: React.FC<SwapFormProps> = ({ closeWorkspace, patientUuid, mortua
 
         mutate();
         navigate({ to: window.getOpenmrsSpaBase() + `home/morgue` });
-        closeWorkspace();
+        await closeWorkspace({ discardUnsavedChanges: true });
       } else {
         showSnackbar({
           kind: 'error',
@@ -167,6 +171,7 @@ const SwapForm: React.FC<SwapFormProps> = ({ closeWorkspace, patientUuid, mortua
   };
 
   return (
+    <Workspace2 title={t('swapCompartment', 'Swap compartment')}>
     <Form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
       <div className={styles.formContainer}>
         <Stack gap={3}>
@@ -276,6 +281,7 @@ const SwapForm: React.FC<SwapFormProps> = ({ closeWorkspace, patientUuid, mortua
         </Button>
       </ButtonSet>
     </Form>
+    </Workspace2>
   );
 };
 

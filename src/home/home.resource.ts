@@ -15,7 +15,7 @@ import {
 } from '../types';
 import React, { useMemo, useEffect, useState } from 'react';
 import { useStorageAssignments } from '../morgue-management/morgue-management.resource';
-import usePatients from '../bed-layout/discharged/discharged-bed-layout.resource';
+import usePatients, { useMortuaryDischargeEncounter } from '../bed-layout/discharged/discharged-bed-layout.resource';
 import { type ConfigObject } from '../config-schema';
 
 interface MortuaryApiResponse {
@@ -27,28 +27,30 @@ export const useMorgueEncounters = () => {
   const { waitingToBeReceived, isLoading: isLoading1, mutate: mutateWaiting } = useWaitingToBeReceived();
   const { awaitingAdmission, isLoading: isLoading2, mutate: mutateAwaiting } = useAwaitingAdmission();
   const {
+    encounters: discharged,
+    isLoading: isLoadingDischarges,
+    mutate: mutateDischarges,
+  } = useMortuaryDischargeEncounter();
+  const {
     assignments,
     isLoading: isLoadingAssignments,
     mutate: mutateAssignments,
   } = useStorageAssignments(sessionLocation?.sessionLocation?.uuid);
 
   const mutateAll = React.useCallback(async () => {
-    await Promise.all([mutateWaiting(), mutateAwaiting(), mutateAssignments()]);
-  }, [mutateWaiting, mutateAwaiting, mutateAssignments]);
+    await Promise.all([mutateWaiting(), mutateAwaiting(), mutateAssignments(), mutateDischarges()]);
+  }, [mutateWaiting, mutateAwaiting, mutateAssignments, mutateDischarges]);
 
   const filteredWaitingToBeReceived = waitingToBeReceived?.filter(val => !assignments?.some(ass => ass?.patient?.uuid === val?.patient?.uuid));
   const filteredAwaitingAdmission = awaitingAdmission?.filter(val => !assignments?.some(ass => ass?.patient?.uuid === val?.patient?.uuid));
 
   const filteredAdmitted = assignments?.filter(ass => ass?.status?.toUpperCase() === "OCCUPIED" && ass?.dateDischarged == null);
-  const filteredDischarged = assignments?.filter(ass => ass?.status?.toUpperCase() === "DISCHARGED" && ass?.dateDischarged != null);
-
-
   return {
     waitingToBeReceived: filteredWaitingToBeReceived,
     awaitingAdmission: filteredAwaitingAdmission,
     admitted: filteredAdmitted,
-    discharged: filteredDischarged,
-    isLoading: isLoading1 || isLoading2 || isLoadingAssignments,
+    discharged,
+    isLoading: isLoading1 || isLoading2 || isLoadingAssignments || isLoadingDischarges,
     mutate: mutateAll,
   }
 }

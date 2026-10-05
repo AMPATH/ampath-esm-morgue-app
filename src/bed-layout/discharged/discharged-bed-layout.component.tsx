@@ -1,18 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { showModal, useConfig, useLayoutType } from '@openmrs/esm-framework';
+import { showModal, useLayoutType } from '@openmrs/esm-framework';
 import { InlineLoading, Pagination, Search } from '@carbon/react';
 import styles from '../bed-layout.scss';
-import { Patient, type MortuaryLocationResponse, EnhancedPatient } from '../../types';
-import { ConfigObject } from '../../config-schema';
-import usePatients, { useMortuaryDischargeEncounter } from './discharged-bed-layout.resource';
+import { Patient, EnhancedPatient } from '../../types';
+import usePatients, { type MortuaryDischargeEncounter } from './discharged-bed-layout.resource';
 import BedCard from '../../bed/bed.component';
 import EmptyMorgueAdmission from '../../empty-state/empty-morgue-admission.component';
 import { transformDischargedPatient, extractPatientFromEnhanced } from '../../helpers/expression-helper';
 import { PatientProvider } from '../../context/deceased-person-context';
-import { StorageAssignment } from '../../morgue-management/types';
 interface BedLayoutProps {
-  discharged: StorageAssignment[];
+  discharged: MortuaryDischargeEncounter[];
   isLoading: boolean;
   onPrintGatePass?: (patient: Patient, encounterDate?: string) => void;
   onPrintPostmortem?: (patientUuid: string) => void;
@@ -21,28 +19,20 @@ interface BedLayoutProps {
 
 const DischargedBedLayout: React.FC<BedLayoutProps> = ({ discharged, isLoading, onPrintGatePass }) => {
   const { t } = useTranslation();
-  const { morgueDischargeEncounterTypeUuid } = useConfig<ConfigObject>();
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currPageSize, setCurrPageSize] = useState(100);
   const isTablet = useLayoutType() === 'tablet';
   const controlSize = isTablet ? 'md' : 'sm';
 
   const {
-    dischargedPatientUuids,
-    encounters,
-    currentPage,
-    totalCount,
-    currPageSize,
-    setCurrPageSize,
-    goTo,
-  } = useMortuaryDischargeEncounter(morgueDischargeEncounterTypeUuid, discharged);
-
-  const {
     patients: dischargedPatients,
     error: patientsError,
-  } = usePatients(dischargedPatientUuids || []);
+  } = usePatients([...new Set(discharged.map((encounter) => encounter.patient.uuid))]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
+    setCurrentPage(1);
   };
 
   const filteredPatients = useMemo(() => {
@@ -66,16 +56,6 @@ const DischargedBedLayout: React.FC<BedLayoutProps> = ({ discharged, isLoading, 
       );
     });
   }, [dischargedPatients, searchTerm]);
-
-  const getEncounterDateForPatient = (patientUuid: string): string | null => {
-    if (!encounters || encounters.length === 0) {
-      return null;
-    }
-
-    const patientEncounter = encounters.find((encounter) => encounter.patient?.uuid === patientUuid);
-
-    return patientEncounter?.encounterDateTime || null;
-  };
 
   const handlePrintGatePass = (patient: EnhancedPatient | Patient, encounterDate?: string) => {
     let originalPatient: Patient | null = null;
@@ -122,7 +102,7 @@ const DischargedBedLayout: React.FC<BedLayoutProps> = ({ discharged, isLoading, 
     return <EmptyMorgueAdmission title={t('noDischargedPatient', 'No deceased patients currently discharged')} />;
   }
 
-  const patientsToShow = filteredPatients;
+  const patientsToShow = filteredPatients.slice((currentPage - 1) * currPageSize, currentPage * currPageSize);
 
   if (searchTerm.trim() && patientsToShow.length === 0) {
     return (
@@ -158,12 +138,16 @@ const DischargedBedLayout: React.FC<BedLayoutProps> = ({ discharged, isLoading, 
       <div className={styles.bedLayoutWrapper}>
         <div className={styles.bedLayoutContainer}>
           {patientsToShow.map((patient) => {
-            const encounterDate = getEncounterDateForPatient(patient.uuid);
+            const dischargeEncounter = discharged.find((encounter) => encounter.patient.uuid === patient.uuid);
 
             return (
               <BedCard
                 key={patient.uuid}
-                patient={transformDischargedPatient(patient, encounterDate)}
+                patient={transformDischargedPatient(
+                  patient,
+                  dischargeEncounter?.encounterDateTime ?? undefined,
+                  dischargeEncounter?.dischargeType,
+                )}
                 showActions={{
                   printGatePass: true,
                 }}
@@ -175,15 +159,15 @@ const DischargedBedLayout: React.FC<BedLayoutProps> = ({ discharged, isLoading, 
         <div className={styles.paginationFooter}>
           <Pagination
             page={currentPage || 1}
-            totalItems={totalCount || 0}
+            totalItems={filteredPatients.length}
             pageSize={currPageSize}
             pageSizes={[10, 20, 50, 100]}
             onChange={({ page, pageSize }: { page: number; pageSize: number }) => {
               if (pageSize !== currPageSize) {
                 setCurrPageSize(pageSize);
-                goTo(1);
+                setCurrentPage(1);
               } else {
-                goTo(page);
+                setCurrentPage(page);
               }
             }}
           />

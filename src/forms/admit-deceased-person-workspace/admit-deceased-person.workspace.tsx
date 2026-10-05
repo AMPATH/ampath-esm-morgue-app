@@ -34,6 +34,7 @@ import {
   useConfig,
   useLayoutType,
   useSession,
+  Workspace2,
 } from '@openmrs/esm-framework';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -57,20 +58,19 @@ import { type MortuaryLocationResponse, type MortuaryPatient } from '../../types
 import { useCompartments, useStorageUnits } from '../../morgue-management/morgue-management.resource';
 
 interface AdmitDeceasedPersonProps {
-  closeWorkspace: () => void;
   patientData: MortuaryPatient;
-  mortuaryLocation: MortuaryLocationResponse;
-  mutated: () => void;
+  mortuaryLocation?: MortuaryLocationResponse;
+  mutated?: () => void;
   deceasedPatientUuid?: string;
 }
 
-const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
-  closeWorkspace,
-  patientData,
-  mortuaryLocation,
-  mutated,
-  deceasedPatientUuid,
-}) => {
+interface AdmitDeceasedPersonWorkspaceProps {
+  closeWorkspace: (options?: { discardUnsavedChanges?: boolean }) => Promise<boolean>;
+  workspaceProps: AdmitDeceasedPersonProps | null;
+}
+
+const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonWorkspaceProps> = ({ closeWorkspace, workspaceProps }) => {
+  const { patientData, mortuaryLocation, mutated, deceasedPatientUuid } = workspaceProps ?? ({} as AdmitDeceasedPersonProps);
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const [searchTerm, setSearchTerm] = useState('');
@@ -203,7 +203,7 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
       const { admissionEncounter, compartment } = await admitBody(patientUuid, data);
 
       if (admissionEncounter && compartment) {
-        await mutated();
+        await mutated?.();
       }
 
       if (admissionEncounter && compartment) {
@@ -245,7 +245,7 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
           : t('admissionBillSuccessMessage', "Patient's bill has been created successfully"),
         kind: 'success',
       });
-      closeWorkspace();
+      await closeWorkspace({ discardUnsavedChanges: true });
     } catch (error) {
       showSnackbar({
         title: t('error', 'Error'),
@@ -256,6 +256,7 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
   };
 
   return (
+    <Workspace2 title={t('admissionForm', 'Admission form')}>
     <Form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
       <div className={styles.formContainer}>
         <Stack gap={3}>
@@ -880,7 +881,7 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
       </div>
 
       <ButtonSet className={classNames(styles.buttonSet, { [styles.tablet]: isTablet })}>
-        <Button kind="secondary" onClick={closeWorkspace}>
+        <Button kind="secondary" onClick={() => closeWorkspace()}>
           {t('cancel', 'Cancel')}
         </Button>
         <Button kind="primary" type="submit" disabled={isSubmitting || !isDirty}>
@@ -892,6 +893,7 @@ const AdmitDeceasedPerson: React.FC<AdmitDeceasedPersonProps> = ({
         </Button>
       </ButtonSet>
     </Form>
+    </Workspace2>
   );
 };
 

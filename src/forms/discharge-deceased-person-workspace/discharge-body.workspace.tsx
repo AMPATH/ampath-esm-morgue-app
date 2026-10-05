@@ -30,6 +30,7 @@ import {
   fhirBaseUrl,
   setCurrentVisit,
   useSession, // Add this import
+  Workspace2,
 } from '@openmrs/esm-framework';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -45,24 +46,23 @@ import { ConfigObject } from '../../config-schema';
 import { MortuaryLocationResponse, PatientInfo } from '../../types';
 import { mutate as mutateSWR } from 'swr';
 interface DischargeFormProps {
-  closeWorkspace: () => void;
-  patientUuid: string;
-  bedId: number;
-  storageAssignmentUuid?: string;
-  mortuaryLocation: MortuaryLocationResponse;
-  mutate: () => void;
-  directDischarge?: boolean;
+  closeWorkspace: (options?: { discardUnsavedChanges?: boolean }) => Promise<boolean>;
+  workspaceProps: {
+    patientUuid: string;
+    bedId?: number;
+    storageAssignmentUuid?: string;
+    mortuaryLocation?: MortuaryLocationResponse;
+    mutate?: () => void;
+    directDischarge?: boolean;
+  } | null;
 }
 
 const DischargeForm: React.FC<DischargeFormProps> = ({
   closeWorkspace,
-  patientUuid,
-  bedId,
-  storageAssignmentUuid,
-  mortuaryLocation,
-  directDischarge = false,
-  mutate,
+  workspaceProps,
 }) => {
+  const { patientUuid, bedId, storageAssignmentUuid, mortuaryLocation, directDischarge = false, mutate } =
+    workspaceProps ?? ({} as NonNullable<DischargeFormProps['workspaceProps']>);
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -148,7 +148,7 @@ const DischargeForm: React.FC<DischargeFormProps> = ({
 
     if (currentVisitIsRetrospective) {
       setCurrentVisit(null, null);
-      closeWorkspace();
+      await closeWorkspace({ discardUnsavedChanges: true });
       return;
     }
 
@@ -219,7 +219,7 @@ const DischargeForm: React.FC<DischargeFormProps> = ({
       });
 
       await mutate();
-      closeWorkspace();
+      await closeWorkspace({ discardUnsavedChanges: true });
     } catch (error) {
       let errorMessage = t('dischargeUnknownError', 'An unknown error occurred');
       if (error?.message) {
@@ -241,6 +241,7 @@ const DischargeForm: React.FC<DischargeFormProps> = ({
   };
 
   return (
+    <Workspace2 title={t('dischargeForm', 'Discharge form')}>
     <Form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
       <div className={styles.formContainer}>
         {isLoadingBills && <InlineLoading description={t('loadingBills', 'Loading bills...')} />}
@@ -536,7 +537,7 @@ const DischargeForm: React.FC<DischargeFormProps> = ({
       </div>
 
       <ButtonSet className={classNames(styles.buttonSet, { [styles.tablet]: isTablet })}>
-        <Button kind="secondary" onClick={closeWorkspace}>
+        <Button kind="secondary" onClick={() => closeWorkspace()}>
           {t('cancel', 'Cancel')}
         </Button>
         <Button
@@ -551,6 +552,7 @@ const DischargeForm: React.FC<DischargeFormProps> = ({
         </Button>
       </ButtonSet>
     </Form>
+    </Workspace2>
   );
 };
 

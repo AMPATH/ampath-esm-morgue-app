@@ -4,7 +4,7 @@ import { InlineLoading, Search, SkeletonText } from '@carbon/react';
 import styles from '../bed-layout.scss';
 import { MortuaryPatient, MortuaryLocationResponse, EnhancedPatient } from '../../types';
 import { useAwaitingPatients } from '../../home/home.resource';
-import { launchWorkspace, useLayoutType } from '@openmrs/esm-framework';
+import { launchWorkspace2, useLayoutType } from '@openmrs/esm-framework';
 import { EmptyState } from '@openmrs/esm-patient-common-lib/src';
 import EmptyMorgueAdmission from '../../empty-state/empty-morgue-admission.component';
 import { getOriginalPatient, transformMortuaryPatient } from '../../helpers/expression-helper';
@@ -55,8 +55,7 @@ const AwaitingBedLayout: React.FC<BedLayoutProps> = ({
   const handleAdmit = (enhancedPatient: EnhancedPatient) => {
     const originalPatient = getOriginalPatient(enhancedPatient);
     if (originalPatient && 'patient' in originalPatient) {
-      launchWorkspace('admit-deceased-person-form', {
-        workspaceTitle: t('admissionForm', 'Admission form'),
+      launchWorkspace2('admit-deceased-person-form', {
         patientData: originalPatient,
         // mortuaryLocation,
         mutated,

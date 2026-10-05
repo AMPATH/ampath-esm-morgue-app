@@ -37,18 +37,20 @@ import { DeceasedPatientHeader } from '../../deceased-patient-header/deceased-pa
 import { markPersonDeceased, useCausesOfDeath } from './mark-peson-deceased.resource';
 
 interface MarkPatientDeceasedFormProps {
-    closeWorkspace: () => void;
-    patientData: MortuaryPatient;
-    patientUuid?: string;
-    mutated?: () => void | Promise<unknown>;
+    closeWorkspace: (options?: { discardUnsavedChanges?: boolean }) => Promise<boolean>;
+    workspaceProps: {
+        patientData: MortuaryPatient;
+        patientUuid?: string;
+        mutated?: () => void | Promise<unknown>;
+        onMarkComplete?: () => void;
+    } | null;
 }
 
 const MarkPatientDeceasedForm: React.FC<MarkPatientDeceasedFormProps> = ({
     closeWorkspace,
-    patientData,
-    patientUuid,
-    mutated,
+    workspaceProps,
 }) => {
+    const { patientData, patientUuid, mutated, onMarkComplete } = workspaceProps ?? ({} as NonNullable<MarkPatientDeceasedFormProps['workspaceProps']>);
     const { t } = useTranslation();
     const isTablet = useLayoutType() === 'tablet';
     const memoizedPatientUuid = useMemo(() => ({ patientUuid }), [patientUuid]);
@@ -114,7 +116,14 @@ const MarkPatientDeceasedForm: React.FC<MarkPatientDeceasedFormProps> = ({
 
             markPersonDeceased(deathDate, patientUuid, causeOfDeath, nonCodedCauseOfDeath)
                 .then(() => {
-                    return Promise.resolve(mutated?.()).then(() => closeWorkspace());
+                    return Promise.resolve(mutated?.()).then(async () => {
+                        if (onMarkComplete) {
+                            await closeWorkspace({ discardUnsavedChanges: true });
+                            onMarkComplete();
+                            return;
+                        }
+                        closeWorkspace({ discardUnsavedChanges: true });
+                    });
                 })
                 .catch((error) => {
                     showSnackbar({
@@ -125,12 +134,13 @@ const MarkPatientDeceasedForm: React.FC<MarkPatientDeceasedFormProps> = ({
                     });
                 });
         },
-        [closeWorkspace, patientUuid, t, mutated],
+        [closeWorkspace, patientUuid, t, mutated, onMarkComplete],
     );
 
     const onError = (errors) => console.error(errors);
 
     return (
+        <Workspace2 title={t('markDeceased', 'Mark patient deceased')}>
         <Form className={styles.form} onSubmit={handleSubmit(onSubmit, onError)}>
             <div>
                 <DeceasedPatientHeader patientData={patientData} />
@@ -280,6 +290,7 @@ const MarkPatientDeceasedForm: React.FC<MarkPatientDeceasedFormProps> = ({
                 </Button>
             </ButtonSet>
         </Form>
+        </Workspace2>
     );
 };
 
